@@ -1,11 +1,134 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>주소 입력</title>
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+                   "Noto Sans KR", Arial, sans-serif;
+      background: #f7f7f7;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 420px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      font-size: 20px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      background: #673ab7;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:active {
+      opacity: 0.9;
+    }
+  </style>
 </head>
+
 <body>
-  <h1>주소 입력 페이지</h1>
-  <p>GitHub Pages 정상 동작 확인 완료 🎉</p>
+  <div class="container">
+    <h1>배송 정보 입력</h1>
+
+    <label for="recipient_name">이름 *</label>
+    <input
+      type="text"
+      id="recipient_name"
+      placeholder="받는 분 이름을 입력하세요"
+      required
+    />
+
+    <button type="button" onclick="submitToGoogleForm()">
+      제출
+    </button>
+  </div>
+
+  <!-- 실제 제출용 iframe (화면에 보이지 않음) -->
+  <iframe name="hidden_iframe" style="display:none;"></iframe>
+
+  <script>
+    /*************************************************
+     * 1️⃣ 구글폼 formResponse URL
+     *************************************************/
+    const GOOGLE_FORM_ACTION =
+      "https://docs.google.com/forms/d/e/1FAIpQLSdlW-FnNsajQyguq2IF4RzkL3XRpJ2bbknujs5Ai03Hgmysvw/formResponse";
+
+    /*************************************************
+     * 2️⃣ 구글폼 entry ID 매핑
+     *    이름 필드: entry.1974314202
+     *************************************************/
+    const ENTRY = {
+      recipient_name: "entry.1974314202"
+    };
+
+    /*************************************************
+     * 3️⃣ 제출 함수
+     *************************************************/
+    function submitToGoogleForm() {
+      const nameInput = document.getElementById("recipient_name");
+      const name = nameInput.value.trim();
+
+      if (!name) {
+        alert("이름을 입력해주세요.");
+        nameInput.focus();
+        return;
+      }
+
+      // form 동적 생성
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = GOOGLE_FORM_ACTION;
+      form.target = "hidden_iframe";
+
+      // 이름 필드
+      const nameField = document.createElement("input");
+      nameField.type = "hidden";
+      nameField.name = ENTRY.recipient_name;
+      nameField.value = name;
+      form.appendChild(nameField);
+
+      document.body.appendChild(form);
+      form.submit();
+      form.remove();
+
+      alert("제출이 완료되었습니다. 감사합니다!");
+      nameInput.value = "";
+    }
+  </script>
 </body>
 </html>
