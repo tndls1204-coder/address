@@ -3,132 +3,84 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>주소 입력</title>
-
+  <title>주소 입력 테스트 (GitHub Pages → Google Forms)</title>
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
-                   "Noto Sans KR", Arial, sans-serif;
-      background: #f7f7f7;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 420px;
-      margin: 40px auto;
-      background: #fff;
-      padding: 24px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-
-    h1 {
-      font-size: 20px;
-      margin-bottom: 16px;
-      text-align: center;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 600;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      font-size: 16px;
-      font-weight: bold;
-      background: #673ab7;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    button:active {
-      opacity: 0.9;
-    }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
+    .card { max-width: 520px; padding: 16px; border: 1px solid #ddd; border-radius: 12px; }
+    label { display:block; margin: 12px 0 6px; font-weight: 600; }
+    input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 10px; }
+    button { margin-top: 14px; width: 100%; padding: 12px; border: 0; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    .ok { margin-top: 12px; font-size: 14px; color: #0a7a2f; display:none; }
+    .err { margin-top: 12px; font-size: 14px; color: #b00020; display:none; }
+    small { color:#666; }
   </style>
 </head>
-
 <body>
-  <div class="container">
-    <h1>배송 정보 입력</h1>
+  <div class="card">
+    <h2 style="margin:0 0 8px;">주소 입력 테스트</h2>
+    <small>GitHub Pages에서 입력 → Google Form 응답 시트로 저장되는지 테스트</small>
 
-    <label for="recipient_name">이름 *</label>
-    <input
-      type="text"
-      id="recipient_name"
-      placeholder="받는 분 이름을 입력하세요"
-      required
-    />
+    <label for="name">이름</label>
+    <input id="name" type="text" placeholder="예: 수린" autocomplete="name" />
 
-    <button type="button" onclick="submitToGoogleForm()">
-      제출
-    </button>
+    <button id="submitBtn" type="button">제출</button>
+
+    <div id="ok" class="ok">✅ 제출 요청을 보냈습니다. (시트에 5~30초 내 반영될 수 있어요)</div>
+    <div id="err" class="err">❌ 전송 중 문제가 발생했습니다. 다시 시도해 주세요.</div>
   </div>
 
-  <!-- 실제 제출용 iframe (화면에 보이지 않음) -->
+  <!-- Google Forms POST를 받을 숨김 iframe -->
   <iframe name="hidden_iframe" style="display:none;"></iframe>
 
   <script>
-    /*************************************************
-     * 1️⃣ 구글폼 formResponse URL
-     *************************************************/
-    const GOOGLE_FORM_ACTION =
+    // ✅ 당신 구글폼 formResponse 주소 (고정)
+    const FORM_ACTION =
       "https://docs.google.com/forms/d/e/1FAIpQLSdlW-FnNsajQyguq2IF4RzkL3XRpJ2bbknujs5Ai03Hgmysvw/formResponse";
 
-    /*************************************************
-     * 2️⃣ 구글폼 entry ID 매핑
-     *    이름 필드: entry.1974314202
-     *************************************************/
-    const ENTRY = {
-      recipient_name: "entry.1974314202"
-    };
+    // ✅ 당신 구글폼 '이름' 질문 entry 번호 (view-source에서 확인됨)
+    //    (업로드해준 폼 소스에서 "이름" 항목 id가 1974314202로 보임)
+    const ENTRY_NAME = "entry.1974314202";
 
-    /*************************************************
-     * 3️⃣ 제출 함수
-     *************************************************/
-    function submitToGoogleForm() {
-      const nameInput = document.getElementById("recipient_name");
-      const name = nameInput.value.trim();
+    const ok = document.getElementById("ok");
+    const err = document.getElementById("err");
 
-      if (!name) {
-        alert("이름을 입력해주세요.");
-        nameInput.focus();
+    document.getElementById("submitBtn").addEventListener("click", () => {
+      ok.style.display = "none";
+      err.style.display = "none";
+
+      const nameVal = document.getElementById("name").value.trim();
+      if (!nameVal) {
+        err.textContent = "❌ 이름을 입력해 주세요.";
+        err.style.display = "block";
         return;
       }
 
-      // form 동적 생성
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = GOOGLE_FORM_ACTION;
-      form.target = "hidden_iframe";
+      // 🔥 핵심: 동적으로 form 만들어서 Google Forms로 POST (CORS 무관)
+      const f = document.createElement("form");
+      f.action = FORM_ACTION;
+      f.method = "POST";
+      f.target = "hidden_iframe";
 
-      // 이름 필드
-      const nameField = document.createElement("input");
-      nameField.type = "hidden";
-      nameField.name = ENTRY.recipient_name;
-      nameField.value = name;
-      form.appendChild(nameField);
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = ENTRY_NAME;
+      input.value = nameVal;
+      f.appendChild(input);
 
-      document.body.appendChild(form);
-      form.submit();
-      form.remove();
+      // 일부 환경에서 안정성 위해 hidden 필드(선택)
+      const fbzx = document.createElement("input");
+      fbzx.type = "hidden";
+      fbzx.name = "fbzx";
+      fbzx.value = Date.now().toString(); // 임의값
+      f.appendChild(fbzx);
 
-      alert("제출이 완료되었습니다. 감사합니다!");
-      nameInput.value = "";
-    }
+      document.body.appendChild(f);
+      f.submit();
+      f.remove();
+
+      ok.style.display = "block";
+      document.getElementById("name").value = "";
+    });
   </script>
 </body>
 </html>
