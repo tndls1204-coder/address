@@ -2,95 +2,66 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>주소 입력</title>
   <style>
-    body{font-family:system-ui, sans-serif; max-width:520px; margin:40px auto; padding:0 16px;}
-    h1{font-size:40px; margin:0 0 18px;}
-    label{display:block; margin:18px 0 8px; font-weight:800; font-size:22px;}
-    input{
-      width:100%; padding:14px; font-size:20px; box-sizing:border-box;
-      border:2px solid #333; border-radius:6px;
-    }
-    button{
-      width:100%; padding:18px; font-size:24px; margin-top:18px; cursor:pointer;
-      border:2px solid #333; border-radius:6px; background:#fff;
-    }
-    .hint{margin-top:12px; color:#444;}
-    #toast{
-      margin-top:18px; padding:14px 16px; border-radius:10px;
-      background:#f3f3f3; display:none; align-items:center; gap:10px;
-    }
-    #toast.show{display:flex;}
-    #check{
-      width:22px; height:22px; border-radius:4px; background:#22c55e;
-      display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:900;
-      flex:0 0 auto;
-    }
-    #detail{white-space:pre-line;}
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 24px; }
+    .wrap { max-width: 420px; margin: 0 auto; }
+    input { width: 100%; padding: 12px; font-size: 16px; margin: 10px 0; }
+    button { width: 100%; padding: 12px; font-size: 16px; cursor: pointer; }
+    #msg { margin-top: 12px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
-  <h1>주소 입력</h1>
+  <div class="wrap">
+    <h2>주소 입력 테스트</h2>
 
-  <label for="name">이름 <span style="color:#d00">*</span></label>
-  <input id="name" placeholder="예: 김수린" />
+    <label for="name">이름</label>
+    <input id="name" type="text" placeholder="이름을 입력하세요" />
 
-  <button id="submitBtn" type="button" onclick="submitForm()">제출</button>
+    <button type="button" onclick="submitForm()">제출</button>
 
-  <div class="hint">제출 후 3~10초 뒤 응답 시트에 기록되는지 확인해 주세요.</div>
-
-  <div id="toast">
-    <div id="check">✓</div>
-    <div id="detail"></div>
+    <div id="msg"></div>
   </div>
 
   <script>
-    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyi8tRXw1IPd-8SOGL9_VzWu-n_olorL63ylFgxlxHdRgNCamoDQQNBgqhfcg-W3HKc/exec";
+    // ✅ 새 배포 URL로 교체 완료
+    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycby1Roo6NAMDxWEFSUshwjdQEC5tg2e9BJaxXcv6Azz-btbPQx6vglD2dE_i3E-ZGaHL/exec";
 
-    function showToast(msg) {
-      const toast = document.getElementById("toast");
-      const detail = document.getElementById("detail");
-      detail.textContent = msg;
-      toast.classList.add("show");
-    }
-
-    function hideToast() {
-      document.getElementById("toast").classList.remove("show");
+    function setMsg(text) {
+      document.getElementById("msg").textContent = text;
     }
 
     async function submitForm() {
-      hideToast();
-
-      const btn = document.getElementById("submitBtn");
-      const nameEl = document.getElementById("name");
-      const name = (nameEl.value || "").trim();
-
+      const name = document.getElementById("name").value.trim();
       if (!name) { alert("이름을 입력하세요"); return; }
 
-      btn.disabled = true;
-      btn.textContent = "전송 중…";
+      // ✅ 프리플라이트(OPTIONS) 발생 안 하는 전송 방식
+      const body = new URLSearchParams();
+      body.append("name", name);
 
       try {
+        setMsg("전송 중...");
+
         const res = await fetch(WEBAPP_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name })
+          body: body,
+          // ❌ headers 절대 추가하지 말 것
+          // ❌ JSON.stringify 절대 금지
         });
 
         const out = await res.json().catch(() => ({}));
 
         if (res.ok && out.ok) {
-          showToast("전송 요청을 보냈습니다. (시트 반영까지 몇 초 걸릴 수 있어요)");
-          nameEl.value = "";
+          setMsg("✅ 전송 완료!\nstatus=" + (out.status ?? res.status));
+          document.getElementById("name").value = "";
         } else {
-          showToast("전송 실패: " + (out.error || out.status || res.status));
+          setMsg("❌ 실패\nHTTP=" + res.status + "\n" + JSON.stringify(out));
+          alert("실패: " + (out.error || out.status || res.status));
         }
-      } catch (e) {
-        showToast("네트워크 오류: " + e);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "제출";
+      } catch (err) {
+        setMsg("❌ 네트워크 오류: " + err);
+        alert("네트워크 오류: " + err);
       }
     }
   </script>
