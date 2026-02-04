@@ -1,80 +1,75 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
   <title>주소 입력</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 20px; max-width: 520px; margin: 0 auto; }
-    label { display:block; margin: 12px 0 6px; font-weight: 600; }
-    input { width: 100%; padding: 12px; font-size: 16px; box-sizing: border-box; }
-    button { margin-top: 14px; width: 100%; padding: 14px; font-size: 16px; cursor:pointer; }
-    .ok { margin-top: 14px; padding: 12px; background: #f1f3f4; border-radius: 8px; display:none; }
-    .err { margin-top: 14px; padding: 12px; background: #fff3f3; border-radius: 8px; display:none; }
-    .muted { color:#666; font-size: 13px; margin-top: 8px; }
+    body { font-family: sans-serif; padding: 24px; }
+    input, button { font-size: 16px; padding: 8px; }
+    button { margin-top: 12px; }
   </style>
 </head>
 <body>
+  <h1>주소 입력</h1>
 
-  <h2>주소 입력</h2>
+  <label>
+    이름 *
+    <br />
+    <input id="name" placeholder="예: 김수린" required />
+  </label>
 
-  <label for="nameInput">이름 *</label>
-  <input id="nameInput" type="text" placeholder="예: 김수린" required />
+  <br />
+  <button onclick="submitForm()">제출</button>
 
-  <button id="submitBtn" type="button">제출</button>
-  <div class="muted">제출 후 3~10초 뒤 응답시트에 기록되는지 확인해 주세요.</div>
+  <p id="result"></p>
 
-  <div id="okBox" class="ok">✅ 전송 요청을 보냈습니다. (시트 반영까지 몇 초 걸릴 수 있어요)</div>
-  <div id="errBox" class="err">❌ 전송 중 오류가 발생했습니다. (콘솔 로그 확인)</div>
+<script>
+const FORM_ID = "1FAIpQLSdlW-FnNsajQyguq2IF4RzkL3XRpJ2bbknujs5Ai03Hgmysvw";
+const ENTRY_NAME = "entry.1974314202"; // 이름 질문 entry ID
 
-  <script>
-    const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdlW-FnNsajQyguq2IF4RzkL3XRpJ2bbknujs5Ai03Hgmysvw/formResponse";
-    const ENTRY_NAME = "entry.1974314202";
+async function submitForm() {
+  const name = document.getElementById("name").value.trim();
+  if (!name) {
+    alert("이름을 입력하세요");
+    return;
+  }
 
-    const nameInput = document.getElementById('nameInput');
-    const submitBtn = document.getElementById('submitBtn');
-    const okBox = document.getElementById('okBox');
-    const errBox = document.getElementById('errBox');
+  document.getElementById("result").innerText = "전송 중…";
 
-    function show(el) { el.style.display = 'block'; }
-    function hide(el) { el.style.display = 'none'; }
+  // 1️⃣ viewform을 먼저 로드해서 fbzx 추출
+  const viewRes = await fetch(
+    `https://docs.google.com/forms/d/e/${FORM_ID}/viewform`,
+    { credentials: "omit" }
+  );
+  const html = await viewRes.text();
 
-    submitBtn.addEventListener('click', async () => {
-      hide(okBox); hide(errBox);
+  const fbzxMatch = html.match(/name="fbzx" value="([^"]+)"/);
+  if (!fbzxMatch) {
+    document.getElementById("result").innerText = "fbzx 추출 실패";
+    return;
+  }
 
-      const name = (nameInput.value || '').trim();
-      if (!name) {
-        alert('이름을 입력해 주세요.');
-        nameInput.focus();
-        return;
-      }
+  const fbzx = fbzxMatch[1];
 
-      // ✅ URL-encoded payload 만들기
-      const body = new URLSearchParams();
-      body.append(ENTRY_NAME, name);
+  // 2️⃣ 실제 제출
+  const formData = new URLSearchParams();
+  formData.append(ENTRY_NAME, name);
+  formData.append("fvv", "1");
+  formData.append("pageHistory", "0");
+  formData.append("fbzx", fbzx);
 
-      // (옵션) 일부 환경에서 안정성 ↑
-      body.append("fvv", "1");
-      body.append("pageHistory", "0");
+  await fetch(
+    `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`,
+    {
+      method: "POST",
+      mode: "no-cors",
+      body: formData
+    }
+  );
 
-      try {
-        // ✅ no-cors: 응답은 못 읽지만 "전송"은 됨 (구글폼 기록 목적엔 이게 정답)
-        await fetch(FORM_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-          },
-          body: body.toString()
-        });
-
-        show(okBox);
-        nameInput.value = "";
-      } catch (e) {
-        console.error("Submit failed:", e);
-        show(errBox);
-      }
-    });
-  </script>
+  document.getElementById("result").innerText =
+    "전송 요청을 보냈습니다. (시트 반영까지 몇 초 걸릴 수 있어요)";
+}
+</script>
 </body>
 </html>
