@@ -18,26 +18,63 @@
 
   <h2>주소 입력</h2>
 
-  <!-- 사용자 입력 UI -->
   <label for="nameInput">이름 *</label>
   <input id="nameInput" type="text" placeholder="예: 김수린" required />
 
   <button id="submitBtn" type="button">제출</button>
-  <div class="muted">제출 후 화면에 “전송 완료”가 뜨면 정상입니다.</div>
+  <div class="muted">제출 후 3~10초 뒤 응답시트에 기록되는지 확인해 주세요.</div>
 
-  <div id="okBox" class="ok">✅ 전송 완료! 감사합니다.</div>
-  <div id="errBox" class="err">❌ 전송 실패. 잠시 후 다시 시도해 주세요.</div>
+  <div id="okBox" class="ok">✅ 전송 요청을 보냈습니다. (시트 반영까지 몇 초 걸릴 수 있어요)</div>
+  <div id="errBox" class="err">❌ 전송 중 오류가 발생했습니다. (콘솔 로그 확인)</div>
 
-  <!-- ✅ 핵심: 구글폼으로 실제 POST 제출하는 숨겨진 form -->
-  <!-- 중요: action은 formResponse -->
-  <form id="gform"
-        action="https://docs.google.com/forms/d/e/1FAIpQLSdlW-FnNsajQyguq2IF4RzkL3XRpJ2bbknujs5Ai03Hgmysvw/formResponse"
-        method="POST"
-        target="hidden_iframe"
-        style="display:none;">
-    <!-- ✅ 너의 “이름” entry -->
-    <input type="text" name="entry.1974314202" id="entryName" />
+  <script>
+    const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdlW-FnNsajQyguq2IF4RzkL3XRpJ2bbknujs5Ai03Hgmysvw/formResponse";
+    const ENTRY_NAME = "entry.1974314202";
 
-    <!-- (옵션) 안정성을 높이기 위한 hidden들: 없어도 되지만 넣어두면 좋음 -->
-    <input type="hidden" name="fvv" value="1">
-    <input type="h
+    const nameInput = document.getElementById('nameInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const okBox = document.getElementById('okBox');
+    const errBox = document.getElementById('errBox');
+
+    function show(el) { el.style.display = 'block'; }
+    function hide(el) { el.style.display = 'none'; }
+
+    submitBtn.addEventListener('click', async () => {
+      hide(okBox); hide(errBox);
+
+      const name = (nameInput.value || '').trim();
+      if (!name) {
+        alert('이름을 입력해 주세요.');
+        nameInput.focus();
+        return;
+      }
+
+      // ✅ URL-encoded payload 만들기
+      const body = new URLSearchParams();
+      body.append(ENTRY_NAME, name);
+
+      // (옵션) 일부 환경에서 안정성 ↑
+      body.append("fvv", "1");
+      body.append("pageHistory", "0");
+
+      try {
+        // ✅ no-cors: 응답은 못 읽지만 "전송"은 됨 (구글폼 기록 목적엔 이게 정답)
+        await fetch(FORM_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+          },
+          body: body.toString()
+        });
+
+        show(okBox);
+        nameInput.value = "";
+      } catch (e) {
+        console.error("Submit failed:", e);
+        show(errBox);
+      }
+    });
+  </script>
+</body>
+</html>
