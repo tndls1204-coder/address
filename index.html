@@ -57,11 +57,11 @@
         <div class="grid2">
           <div>
             <label>주문자 성함 *</label>
-            <input id="orderName" type="text" placeholder="예: 김수린" />
+            <input id="orderName" type="text" placeholder="예: 홍길동" />
           </div>
           <div>
             <label>수령인 성함 *</label>
-            <input id="recvName" type="text" placeholder="예: 홍길동" />
+            <input id="recvName" type="text" placeholder="예: 이순신" />
           </div>
         </div>
 
@@ -81,24 +81,28 @@
       <div class="row">
         <label>주소 *</label>
         <div class="grid3">
-          <input id="postcode" type="text" placeholder="우편번호" readonly />
+           // 우편번호 삭제
+          // <input id="postcode" type="text" placeholder="우편번호" readonly />
+          
           <button class="btn-ghost" type="button" onclick="openPostcode()">주소 검색</button>
           <input id="roadAddress" type="text" placeholder="기본주소(도로명/지번)" readonly />
         </div>
         <input id="detailAddress" type="text" placeholder="상세주소 (예: 101동 1004호)" />
-        <div class="hint">※ 로젠 업로드용 시트에서는 “기본주소+상세주소”를 합쳐서 사용하고, 응답 시트에는 분리 저장됩니다.</div>
+        //힌트 삭제
+        //<div class="hint">※ 로젠 업로드용 시트에서는 “기본주소+상세주소”를 합쳐서 사용하고, 응답 시트에는 분리 저장됩니다.</div>
       </div>
 
       <div class="sectionTitle">주문 상품/수량</div>
       <div class="row">
         <div class="products" id="productsBox"></div>
         <div class="hint">※ 여러 상품 선택 가능. 수량은 각 상품별로 입력하세요.</div>
+        <div class="hint">※ 대량 구매 별도 문의 (010-4982-5550).</div>
       </div>
 
       <div class="row">
         <button id="submitBtn" class="btn" type="button" onclick="submitAll()">제출</button>
         <div id="toast" class="toast"></div>
-        <div class="small">제출 후 구글시트에 반영됩니다. (네트워크 상황에 따라 1~5초)</div>
+        <div class="small"> 주문 내용과 배송 정보가 전달됩니다. </div>
       </div>
     </div>
   </div>
