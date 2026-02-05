@@ -3,112 +3,213 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>주문/배송지 입력</title>
+  <title>배려프레스코푸르타 주문/배송지 입력</title>
 
   <!-- 다음(카카오) 주소검색 -->
   <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
   <style>
     :root { color-scheme: light; }
-    body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",Arial,sans-serif; background:#f6f7f9; }
-    .wrap { max-width: 720px; margin:0 auto; padding: 18px; }
-    .card { background:#fff; border-radius:14px; box-shadow:0 6px 18px rgba(0,0,0,.06); padding:18px; }
-    h1 { font-size:18px; margin:0 0 10px; }
-    .muted { color:#666; font-size:13px; line-height:1.45; margin:0 0 14px; }
-    .row { display:grid; gap:10px; margin:12px 0; }
-    label { font-size:13px; color:#222; }
-    input, textarea, button, select {
-      width:100%; box-sizing:border-box;
-      border-radius:12px; border:1px solid #d8dde6;
-      padding:12px; font-size:15px; outline:none; background:#fff;
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif;
+      background: #f6f7f9;
+      color: #111;
     }
-    textarea { min-height:72px; resize:vertical; }
-    input:focus, textarea:focus, select:focus { border-color:#5b8cff; box-shadow:0 0 0 3px rgba(91,140,255,.15); }
-    .btn { border:0; background:#2f6dff; color:#fff; font-weight:700; cursor:pointer; padding:13px 14px; }
-    .btn:disabled { opacity:.55; cursor:not-allowed; }
-    .btn-ghost { background:#eef3ff; color:#1f4fcc; border:1px solid #d6e2ff; font-weight:700; cursor:pointer; }
-    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-    .grid3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
-    .toast { margin-top:12px; padding:12px; border-radius:12px; font-size:14px; display:none; }
+    .wrap { max-width: 680px; margin: 0 auto; padding: 18px; }
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+    h1 { font-size: 18px; margin: 0 0 6px; }
+    .sub { margin: 0 0 14px; color: #555; font-size: 13px; line-height: 1.5; }
+    .badge { display:inline-block; font-size:12px; padding:3px 8px; border-radius:999px; background:#eef3ff; color:#1f4fcc; border:1px solid #d6e2ff; }
+
+    .row { margin: 12px 0; }
+    label { display:block; font-size: 13px; color: #222; margin-bottom: 6px; }
+    input, textarea, select, button {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid #d8dde6;
+      padding: 12px 12px;
+      font-size: 15px;
+      outline: none;
+      background: #fff;
+    }
+    textarea { min-height: 84px; resize: vertical; }
+    input:focus, textarea:focus, select:focus {
+      border-color: #5b8cff;
+      box-shadow: 0 0 0 3px rgba(91,140,255,.15);
+    }
+    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .hint {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.45;
+      margin-top: 6px;
+    }
+    .example {
+      font-size: 12px;
+      color: #555;
+      background: #fafbff;
+      border: 1px dashed #d6e2ff;
+      border-radius: 12px;
+      padding: 10px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      border: 0;
+      background: #2f6dff;
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+      padding: 13px 14px;
+    }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .btn-ghost {
+      background: #eef3ff;
+      color: #1f4fcc;
+      border: 1px solid #d6e2ff;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .toast {
+      margin-top: 12px;
+      padding: 12px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      display: none;
+      white-space: pre-line;
+    }
     .toast.ok  { display:block; background:#ecfff1; border:1px solid #bdeccc; color:#146b2f; }
     .toast.err { display:block; background:#fff1f1; border:1px solid #f0b9b9; color:#8a1f1f; }
-    .small { font-size:12px; color:#777; margin-top:10px; }
 
-    .sectionTitle { margin-top:18px; padding-top:14px; border-top:1px solid #eef0f3; font-weight:800; font-size:14px; }
-    .products { border:1px solid #e7e9ee; border-radius:12px; padding:12px; }
-    .prodRow { display:grid; grid-template-columns: 22px 1fr 90px; gap:10px; align-items:center; padding:8px 0; border-bottom:1px dashed #eef0f3; }
-    .prodRow:last-child { border-bottom:0; }
-    .qty { text-align:center; }
-    .prodName { font-size:14px; color:#222; line-height:1.35; }
-    .hint { font-size:12px; color:#666; margin-top:6px; }
+    .prod {
+      border: 1px solid #eef0f5;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+      background: #fcfcfd;
+    }
+    .prod-top {
+      display:flex;
+      gap: 10px;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+    .prod-title { font-size: 14px; font-weight: 700; margin: 0; }
+    .prod-right { display:flex; gap:10px; align-items:center; min-width: 200px; }
+    .qty {
+      width: 110px;
+      text-align: center;
+    }
+    .qty[disabled] { background:#f3f4f6; color:#999; }
+    .chk { transform: translateY(2px); }
+    .small { font-size: 12px; color:#777; margin-top: 10px; }
+    .hr { height:1px; background:#eef0f5; margin: 14px 0; border:0; }
   </style>
 </head>
 
 <body>
   <div class="wrap">
+
     <div class="card">
-      <h1>주문/배송지 입력</h1>
-      <p class="muted">
-        주문 정보와 배송지를 입력해 주세요. 주소는 <b>주소검색</b> 후 <b>상세주소</b>까지 입력해야 제출됩니다.
+      <div class="badge"> 배려프레스코프루타 </div>
+      <h1> 주문 / 배송정보 입력</h1>
+      <p class="sub">
+        <span style="color:#777;">(주소는 ‘주소 검색’으로 선택 후 상세주소까지 꼭 입력해 주세요.)</span>
       </p>
 
-      <div class="sectionTitle">주문자/수령인</div>
-      <div class="row">
-        <div class="grid2">
-          <div>
-            <label>주문자 성함 *</label>
-            <input id="orderName" type="text" placeholder="예: 홍길동" />
-          </div>
-          <div>
-            <label>수령인 성함 *</label>
-            <input id="recvName" type="text" placeholder="예: 이순신" />
-          </div>
-        </div>
-
-        <div class="grid2">
-          <div>
-            <label>수령인 연락처(휴대폰) *</label>
-            <input id="recvPhone" type="tel" placeholder="예: 010-1234-5678" />
-          </div>
-          <div>
-            <label>배송메세지(선택)</label>
-            <input id="deliveryMemo" type="text" placeholder="예: 문 앞에 놓아주세요" />
-          </div>
-        </div>
-      </div>
-
-      <div class="sectionTitle">배송지</div>
-      <div class="row">
-        <label>주소 *</label>
-        <div class="grid3">
-          <button class="btn-ghost" type="button" onclick="openPostcode()">주소 검색</button>  <input id="postcode" type="text" placeholder="우편번호" readonly />
-        </div>
-          <input id="roadAddress" type="text" placeholder="기본주소(도로명/지번)" readonly />
-        </div>
-        <input id="detailAddress" type="text" placeholder="상세주소 (예: 101동 1004호)" />
-      </div>
-
-      <div class="sectionTitle">주문 상품/수량</div>
-      <div class="row">
-        <div class="products" id="productsBox"></div>
-        <div class="hint">※ 여러 상품 선택 가능. 수량은 각 상품별로 입력하세요.</div>
-        <div class="hint">※ 대량 구매 별도 문의 (010-4982-5550).</div>
-      </div>
-
-      <div class="row">
-        <button id="submitBtn" class="btn" type="button" onclick="submitAll()">제출</button>
-        <div id="toast" class="toast"></div>
-        <div class="small"> 주문 내용과 배송 정보가 전달됩니다. 감사합니다. </div>
+      <div class="example">
+        <b>입력 예시</b><br/>
+        주문자: 홍길동 / 수령인: 이순신 / 연락처: 010-1234-5678<br/>
+        주소: 서울시 강남구 … 101동 1004호<br/>
+        상품: 전통건강즙(배즙) 30포 (1박스) 수량 2
       </div>
     </div>
+
+    <div class="card">
+      <h1>1) 주문자 / 수령인 정보</h1>
+
+      <div class="row grid2">
+        <div>
+          <label>주문자 성함</label>
+          <input id="ordererName" type="text" placeholder="예: 홍길동" autocomplete="name" />
+          <div class="hint">주문하신 분 성함을 입력해 주세요.</div>
+        </div>
+        <div>
+          <label>수령인 성함 (배송 받는 분)</label>
+          <input id="receiverName" type="text" placeholder="예: 이순신" autocomplete="name" />
+          <div class="hint">받는 분 성함을 입력해 주세요.</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>수령인 연락처</label>
+        <input id="receiverPhone" type="tel" inputmode="numeric" placeholder="예: 010-1234-5678" autocomplete="tel" />
+        <div class="hint">숫자만 입력해도 자동으로 010-1234-5678 형태로 정리됩니다.</div>
+      </div>
+
+      <hr class="hr"/>
+
+      <h1>2) 배송지</h1>
+
+      <div class="row">
+        <label>주소</label>
+        <div class="grid2">
+          <input id="baseAddress" type="text" placeholder="주소 검색을 눌러 선택" readonly />
+          <button class="btn-ghost" type="button" onclick="openPostcode()">주소 검색</button>
+        </div>
+        <div class="hint">도로명/지번 주소가 자동 입력됩니다.</div>
+
+        <div style="margin-top:10px;">
+          <input id="detailAddress" type="text" placeholder="상세주소 (예: 101동 1004호)" />
+          <div class="hint">상세주소 미입력 시 반송/오배송 위험이 있습니다.</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>배송 메세지 (선택)</label>
+        <textarea id="message" placeholder="예: 문 앞에 놓아주세요 / 부재 시 경비실 부탁드립니다"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <h1>3) 주문 상품 & 수량</h1>
+      <p class="sub">원하는 상품을 체크하고, 각 상품의 <b>수량</b>을 입력해 주세요.</p>
+
+      <div id="productList"></div>
+
+      <div class="small">
+        ※ 대량 구매 별도 문의 <b>(010-4982-5550)</b> <br/>
+      </div>
+    </div>
+
+    <div class="card">
+      <h1>제출</h1>
+      <button id="submitBtn" class="btn" type="button" onclick="submitAll()">제출하기</button>
+      <div id="toast" class="toast"></div>
+      <div class="small">제출 후 1~3초 내로 주문 내용과 배송 정보가 전달됩니다. 감사합니다.</div>
+    </div>
+
   </div>
 
   <script>
-    // ✅ 여기에 Apps Script "웹 앱 배포 URL (…/exec)" 붙여넣기
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZ6ep8TDH0_OFFyv1BHa3clT4W77EhM3nljvs3yz126lUeFUaCK89PEP7HzT7ifXr_/exec";
-    
+    /***********************
+     * ✅ 여기만 바꾸세요
+     ***********************/
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbws3LtV9zd3Gd7m7OyzteuYZBxUy1oRRZbkSq74VxV4TA8wKh3S_P2uIpq3Z_on6tYAnQ/exec";
 
-    // ✅ 판매 상품 리스트 (필요하면 여기만 수정)
+    /***********************
+     * 상품 목록 (요청한 최종 리스트)
+     ***********************/
     const PRODUCTS = [
       "생과 배 특7.5kg (8~10과)",
       "생과 배 특15kg (16~20과)",
@@ -125,67 +226,98 @@
 
     function setToast(type, msg) {
       const el = document.getElementById("toast");
-      if (!type) { el.className = "toast"; el.style.display="none"; el.textContent=""; return; }
-      el.style.display = "block";
+      if (!type) {
+        el.className = "toast";
+        el.textContent = "";
+        el.style.display = "none";
+        return;
+      }
       el.className = "toast " + (type === "ok" ? "ok" : "err");
       el.textContent = msg;
+      el.style.display = "block";
     }
 
-    function normalizePhone(s) {
-      return (s || "").trim();
+    function normalizePhone(value) {
+      const digits = (value || "").replace(/[^\d]/g, "");
+      if (digits.length === 11 && digits.startsWith("010")) {
+        return `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}`;
+      }
+      if (digits.length === 10 && digits.startsWith("010")) {
+        return `${digits.slice(0,3)}-${digits.slice(3,6)}-${digits.slice(6)}`;
+      }
+      return value.trim();
     }
 
     function openPostcode() {
       new daum.Postcode({
         oncomplete: function(data) {
-          const postcode = data.zonecode || "";
           const addr = data.roadAddress || data.jibunAddress || "";
-          document.getElementById("postcode").value = postcode;
-          document.getElementById("roadAddress").value = addr;
+          document.getElementById("baseAddress").value = addr;
           document.getElementById("detailAddress").focus();
         }
       }).open();
     }
 
     function renderProducts() {
-      const box = document.getElementById("productsBox");
-      box.innerHTML = "";
+      const root = document.getElementById("productList");
+      root.innerHTML = "";
 
       PRODUCTS.forEach((name, idx) => {
-        const row = document.createElement("div");
-        row.className = "prodRow";
-        row.innerHTML = `
-          <input type="checkbox" id="p_${idx}" />
-          <div class="prodName">${escapeHtml(name)}</div>
-          <input class="qty" type="number" id="q_${idx}" min="1" step="1" placeholder="수량" disabled />
-        `;
-        box.appendChild(row);
+        const id = `p_${idx}`;
+        const qid = `q_${idx}`;
 
-        const cb = row.querySelector(`#p_${idx}`);
-        const q = row.querySelector(`#q_${idx}`);
-        cb.addEventListener("change", () => {
-          q.disabled = !cb.checked;
-          if (cb.checked && !q.value) q.value = "1";
-          if (!cb.checked) q.value = "";
+        const div = document.createElement("div");
+        div.className = "prod";
+        div.innerHTML = `
+          <div class="prod-top">
+            <div style="flex:1;">
+              <p class="prod-title">
+                <input class="chk" id="${id}" type="checkbox" />
+                <label for="${id}" style="display:inline; font-weight:700; cursor:pointer;">${escapeHtml(name)}</label>
+              </p>
+              <div class="hint">선택 후 수량을 입력하세요.</div>
+            </div>
+            <div class="prod-right">
+              <input class="qty" id="${qid}" type="number" min="1" step="1" placeholder="수량" disabled />
+            </div>
+          </div>
+        `;
+
+        root.appendChild(div);
+
+        const chk = div.querySelector(`#${CSS.escape(id)}`);
+        const qty = div.querySelector(`#${CSS.escape(qid)}`);
+
+        chk.addEventListener("change", () => {
+          qty.disabled = !chk.checked;
+          if (chk.checked) {
+            qty.value = qty.value || "1";
+            qty.focus();
+          } else {
+            qty.value = "";
+          }
         });
       });
     }
 
-    function escapeHtml(str) {
-      return String(str).replace(/[&<>"']/g, (m) => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-      }[m]));
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
     }
 
-    function collectSelectedProducts() {
+    function collectItems() {
       const items = [];
       PRODUCTS.forEach((name, idx) => {
-        const cb = document.getElementById(`p_${idx}`);
-        const q = document.getElementById(`q_${idx}`);
-        if (cb && cb.checked) {
-          const qty = parseInt((q.value || "").trim(), 10);
+        const chk = document.getElementById(`p_${idx}`);
+        const qtyEl = document.getElementById(`q_${idx}`);
+        if (chk && chk.checked) {
+          const qty = parseInt(qtyEl.value, 10);
           if (Number.isFinite(qty) && qty > 0) {
-            items.push({ name, qty });
+            items.push({ product: name, qty });
           }
         }
       });
@@ -198,68 +330,83 @@
       setToast("", "");
 
       try {
-        const orderName = (document.getElementById("orderName").value || "").trim();
-        const recvName  = (document.getElementById("recvName").value  || "").trim();
-        const recvPhone = normalizePhone(document.getElementById("recvPhone").value);
-        const memo      = (document.getElementById("deliveryMemo").value || "").trim();
+        if (!SCRIPT_URL || SCRIPT_URL.includes("PUT-YOUR-EXEC-URL-HERE")) {
+          setToast("err", "SCRIPT_URL이 비어있습니다.\n웹앱 exec URL로 교체해 주세요.");
+          btn.disabled = false;
+          return;
+        }
 
-        const postcode  = (document.getElementById("postcode").value || "").trim();
-        const baseAddr  = (document.getElementById("roadAddress").value || "").trim();
-        const detail    = (document.getElementById("detailAddress").value || "").trim();
+        const ordererName = (document.getElementById("ordererName").value || "").trim();
+        const receiverName = (document.getElementById("receiverName").value || "").trim();
+        const receiverPhoneRaw = (document.getElementById("receiverPhone").value || "").trim();
+        const receiverPhone = normalizePhone(receiverPhoneRaw);
 
-        const items = collectSelectedProducts();
+        const baseAddress = (document.getElementById("baseAddress").value || "").trim();
+        const detailAddress = (document.getElementById("detailAddress").value || "").trim();
+        const message = (document.getElementById("message").value || "").trim();
 
-        if (!orderName) { setToast("err","주문자 성함을 입력해 주세요."); btn.disabled=false; return; }
-        if (!recvName)  { setToast("err","수령인 성함을 입력해 주세요."); btn.disabled=false; return; }
-        if (!recvPhone) { setToast("err","수령인 연락처를 입력해 주세요."); btn.disabled=false; return; }
-        if (!baseAddr)  { setToast("err","주소 검색을 먼저 해주세요."); btn.disabled=false; return; }
-        if (!detail)    { setToast("err","상세주소를 입력해 주세요."); btn.disabled=false; return; }
-        if (items.length === 0) { setToast("err","주문 상품을 1개 이상 선택해 주세요."); btn.disabled=false; return; }
+        const items = collectItems();
 
-        const fullAddress = `${postcode ? "(" + postcode + ") " : ""}${baseAddr} ${detail}`.trim();
+        // Validation
+        if (!ordererName) { setToast("err", "주문자 성함을 입력해 주세요."); btn.disabled=false; return; }
+        if (!receiverName) { setToast("err", "수령인 성함을 입력해 주세요."); btn.disabled=false; return; }
+        if (!receiverPhone) { setToast("err", "수령인 연락처를 입력해 주세요."); btn.disabled=false; return; }
+        if (!baseAddress) { setToast("err", "주소 검색을 먼저 해주세요."); btn.disabled=false; return; }
+        if (!detailAddress) { setToast("err", "상세주소를 입력해 주세요."); btn.disabled=false; return; }
+        if (!items.length) { setToast("err", "주문 상품을 최소 1개 이상 선택해 주세요."); btn.disabled=false; return; }
+
+        const address = `${baseAddress} ${detailAddress}`.trim();
 
         const payload = {
-          orderName,
-          recvName,
-          recvPhone,
-          memo,
-          postcode,
-          baseAddr,
-          detailAddr: detail,
-          fullAddress,
+          ordererName,
+          receiverName,
+          receiverPhone,
+          address,
+          message,
           items
         };
 
-        // ✅ CORS 회피: 1) sendBeacon 우선 2) fetch no-cors fallback
-        const blob = new Blob([JSON.stringify(payload)], { type: "text/plain;charset=utf-8" });
+        // ✅ preflight(OPTIONS) 최소화를 위해 text/plain 사용 (이전 CORS 이슈 대응)
+        const resp = await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
 
-        let sent = false;
-        if (navigator.sendBeacon) {
-          sent = navigator.sendBeacon(SCRIPT_URL, blob);
-        }
-        if (!sent) {
-          await fetch(SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-          });
+        let json = null;
+        try { json = await resp.json(); } catch (_) {}
+
+        if (!resp.ok) {
+          setToast("err", `전송 실패: HTTP ${resp.status}\n(스크립트 배포/권한/URL을 확인해 주세요)`);
+          btn.disabled = false;
+          return;
         }
 
-        setToast("ok", "제출 완료! 감사합니다.");
-        // 원하면 제출 후 잠금
-        // btn.disabled = true;
+        if (json && json.ok === false) {
+          setToast("err", `전송 실패: ${json.error || "unknown_error"}`);
+          btn.disabled = false;
+          return;
+        }
+
+        setToast("ok", "제출 완료! 감사합니다.\n주문서/로젠업로드 시트에 곧 반영됩니다.");
+
+        // 제출 후 폼 잠금(원하면 해제 가능)
+        btn.disabled = true;
 
       } catch (e) {
         setToast("err", "네트워크 오류: " + (e && e.message ? e.message : String(e)));
         btn.disabled = false;
-        return;
-      } finally {
-        btn.disabled = false;
       }
     }
 
+    // 초기화
     renderProducts();
+
+    // 전화번호 입력 시 자동 포맷
+    document.getElementById("receiverPhone").addEventListener("blur", (ev) => {
+      ev.target.value = normalizePhone(ev.target.value);
+    });
   </script>
 </body>
 </html>
