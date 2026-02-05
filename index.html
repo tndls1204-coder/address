@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>배려프레스코푸르타 주문/배송지 입력</title>
+  <title>배려프레스코프루타 주문/배송지 입력</title>
 
   <!-- 다음(카카오) 주소검색 -->
   <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
@@ -11,8 +11,6 @@
   <style>
     :root { color-scheme: light; }
     * { box-sizing: border-box; }
-
-    /* 가로 튐 방지 */
     html, body { width: 100%; overflow-x: hidden; }
 
     body {
@@ -47,13 +45,7 @@
     }
 
     .row { margin: 12px 0; }
-
-    label {
-      display:block;
-      font-size: 13px;
-      color: #222;
-      margin-bottom: 6px;
-    }
+    label { display:block; font-size: 13px; color: #222; margin-bottom: 6px; }
 
     input, textarea, select, button {
       width: 100%;
@@ -63,7 +55,7 @@
       font-size: 15px;
       outline: none;
       background: #fff;
-      min-width: 0; /* grid 내부 가로튐 방지 */
+      min-width: 0;
     }
 
     input:focus, textarea:focus, select:focus {
@@ -111,9 +103,28 @@
     .hr { height:1px; background:#eef0f5; margin: 14px 0; border:0; }
 
     /* =========================
-       상품 리스트 (PC/모바일 안정 고정)
+       상품 그룹 헤더
        ========================= */
+    .group-head{
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #f2f5ff;
+      border: 1px solid #d6e2ff;
+      color: #1f4fcc;
+      font-weight: 900;
+      font-size: 13px;
+    }
+    .group-sub{
+      margin-top: 6px;
+      color: #6b7280;
+      font-weight: 600;
+      font-size: 12px;
+    }
 
+    /* =========================
+       상품 리스트 (최종: 체크 강조 + 수량 input만)
+       ========================= */
     .prod {
       border: 1px solid #eef0f5;
       border-radius: 12px;
@@ -121,32 +132,21 @@
       margin-top: 10px;
       background: #fcfcfd;
       overflow: hidden;
+      transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+
+    .prod.selected {
+      border-color: #2f6dff;
+      box-shadow: 0 0 0 3px rgba(47,109,255,.12);
+      background: #f5f9ff;
     }
 
     .prod-top {
       display: grid;
-      grid-template-columns: 28px minmax(0, 1fr) 110px;
+      grid-template-columns: 28px minmax(0, 1fr) 96px; /* ✅ 우측은 수량 input만 */
       gap: 12px;
       align-items: start;
     }
-    
-    .group-head{
-  margin-top: 14px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: #f2f5ff;
-  border: 1px solid #d6e2ff;
-  color: #1f4fcc;
-  font-weight: 900;
-  font-size: 13px;
-}
-
-.group-sub{
-  margin-top: 6px;
-  color: #6b7280;
-  font-weight: 600;
-  font-size: 12px;
-}
 
     .chk {
       width: 20px;
@@ -156,17 +156,19 @@
 
     .prod-main { min-width: 0; }
 
-    /* 상품명: 최대 2줄까지만 보이게 */
-.prod-name{
-  display: -webkit-box;
-  -webkit-line-clamp: 2;      /* 최대 2줄 */
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  word-break: keep-all;        /* 한글 단어 쪼개짐 방지 */
-}
-
-/* 괄호/박스 부분은 줄바꿈 금지 */
-.nb { white-space: nowrap; }
+    /* 최대 2줄 + 괄호 안(1박스 등) 줄바꿈 금지용 span */
+    .prod-name{
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: keep-all;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+      cursor: pointer;
+    }
+    .nb { white-space: nowrap; }
 
     .prod-hint {
       margin-top: 6px;
@@ -175,18 +177,26 @@
       line-height: 1.45;
     }
 
-    .qty {
-      width: 110px;
+    .qty{
+      width: 96px;
       text-align: center;
+      height: 44px;
+      padding: 10px;
     }
-
-    .qty[disabled] { background:#f3f4f6; color:#999; }
+    .qty[disabled]{
+      background:#f3f4f6;
+      color:#999;
+    }
 
     @media (max-width: 480px) {
       .wrap { padding: 14px; }
       .grid2 { grid-template-columns: 1fr; }
-      .prod-top { grid-template-columns: 28px minmax(0, 1fr) 92px; gap: 10px; }
-      .qty { width: 92px; }
+
+      .prod-top{
+        grid-template-columns: 28px minmax(0, 1fr) 88px;
+        gap: 10px;
+      }
+      .qty{ width: 88px; }
     }
   </style>
 </head>
@@ -197,9 +207,7 @@
   <div class="card">
     <div class="badge"> 배려프레스코프루타 </div>
     <h1> 주문 / 배송정보 입력</h1>
-    <p class="sub">
-      <span style="color:#777;">(주소는 ‘주소 검색’으로 선택 후 상세주소까지 꼭 입력해 주세요.)</span>
-    </p>
+    <p class="sub"><span style="color:#777;">(주소는 ‘주소 검색’으로 선택 후 상세주소까지 꼭 입력해 주세요.)</span></p>
   </div>
 
   <div class="card">
@@ -228,11 +236,9 @@
 
     <div class="row">
       <label>주소</label>
-
-      <!-- ✅ 구조 정상: 3칸을 grid3 안에 정확히 -->
       <div class="grid3">
         <button class="btn-ghost" type="button" onclick="openPostcode()">주소 검색</button>
-        <input id="postcode" type="text" placeholder="우편번호" readonly />
+        <input id="postcode" type="text" placeholder="우편번호" readonly /></div>
         <input id="baseAddress" type="text" placeholder="주소 검색을 눌러 선택" readonly />
       </div>
 
@@ -273,32 +279,35 @@
 
 <script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxV9yTUz9r7SXxNCy56JYlg9vr8AfTJNI_k5f9MYBoK_XeWngkE6xfTUvSYwpzzbgN4Vw/exec";
-const PRODUCT_GROUPS = [
-  {
-    title: "생과",
-    items: [
-      "생과 배 특7.5kg (8~10과)",
-      "생과 배 특15kg (16~20과)"
-    ]
-  },
-  {
-    title: "배즙/건강즙",
-    items: [
-      "전통건강즙(배즙) 10포 (1박스)",
-      "전통건강즙(배즙) 10포 (3박스)",
-      "전통건강즙(배즙) 30포 (1박스)",
-      "전통건강즙(배즙) 30포 (2박스)",
-      "도라지배즙 10포 (1박스)",
-      "도라지배즙 10포 (3박스)",
-      "도라지배즙 30포 (1박스)",
-      "도라지배즙 30포 (2박스)",
-      "배즙30+도라지배즙30 (2박스)"
-    ]
-  }
-];
-  
-const PRODUCTS = PRODUCT_GROUPS.flatMap(g => g.items);
-  
+
+  /* ✅ 상품 그룹 */
+  const PRODUCT_GROUPS = [
+    {
+      title: "생과",
+      items: [
+        "생과 배 특7.5kg (8~10과)",
+        "생과 배 특15kg (16~20과)"
+      ]
+    },
+    {
+      title: "배즙/건강즙",
+      items: [
+        "전통건강즙(배즙) 10포 (1박스)",
+        "전통건강즙(배즙) 10포 (3박스)",
+        "전통건강즙(배즙) 30포 (1박스)",
+        "전통건강즙(배즙) 30포 (2박스)",
+        "도라지배즙 10포 (1박스)",
+        "도라지배즙 10포 (3박스)",
+        "도라지배즙 30포 (1박스)",
+        "도라지배즙 30포 (2박스)",
+        "배즙30+도라지배즙30 (2박스)"
+      ]
+    }
+  ];
+
+  /* ✅ collectItems 호환용 flat */
+  const PRODUCTS = PRODUCT_GROUPS.flatMap(g => g.items);
+
   // ✅ 중복방지(프론트): 같은 브라우저/기기 clientId 유지
   const CLIENT_ID_KEY = "brfta_client_id_v1";
   function getClientId() {
@@ -368,99 +377,77 @@ const PRODUCTS = PRODUCT_GROUPS.flatMap(g => g.items);
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
   }
-  
-function escapeHtmlName(name){
-  // "(1박스)" "(3박스)" 같은 괄호를 줄바꿈 금지 처리
-  const safe = escapeHtml(name);
-  return safe.replace(/\(([^)]+)\)/g, '<span class="nb">($1)</span>');
-}
-  
-function renderProducts() {
-  const root = document.getElementById("productList");
-  root.innerHTML = "";
 
-  let globalIdx = 0;
+  /* ✅ 괄호 부분 줄바꿈 방지 span(nb) 적용 */
+  function escapeHtmlName(name){
+    const safe = escapeHtml(name);
+    return safe.replace(/\(([^)]+)\)/g, '<span class="nb">($1)</span>');
+  }
 
-  PRODUCT_GROUPS.forEach((group) => {
-    // ✅ 그룹 헤더
-    const head = document.createElement("div");
-    head.className = "group-head";
-    head.innerHTML = `${escapeHtml(group.title)} <div class="group-sub">원하는 상품을 체크하고 수량을 입력해 주세요.</div>`;
-    root.appendChild(head);
+  function clampQty(v){
+    const n = parseInt(v, 10);
+    if (!Number.isFinite(n) || n <= 0) return 1;
+    return n;
+  }
 
-    group.items.forEach((name) => {
-      const idx = globalIdx++;
-      const id = `p_${idx}`;
-      const qid = `q_${idx}`;
-      const mid = `m_${idx}`;
-      const pid = `a_${idx}`;
+  /* ✅ 그룹 헤더 + 상품 렌더링(수량 input만) */
+  function renderProducts() {
+    const root = document.getElementById("productList");
+    root.innerHTML = "";
 
-      const div = document.createElement("div");
-      div.className = "prod";
-      div.innerHTML = `
-        <div class="prod-top">
-          <input class="chk" id="${id}" type="checkbox" />
-          <div class="prod-main">
-            <label for="${id}" class="prod-name">${escapeHtmlName(name)}</label>
-            <div class="prod-hint">선택 후 수량을 입력하세요.</div>
-          </div>
-          <div class="qty-wrap">
-            <button class="qty-btn" id="${mid}" type="button" aria-label="수량 감소" disabled>-</button>
+    let globalIdx = 0;
+
+    PRODUCT_GROUPS.forEach((group) => {
+      const head = document.createElement("div");
+      head.className = "group-head";
+      head.innerHTML = `${escapeHtml(group.title)}<div class="group-sub">원하는 상품을 체크하고 수량을 입력해 주세요.</div>`;
+      root.appendChild(head);
+
+      group.items.forEach((name) => {
+        const idx = globalIdx++;
+        const id = `p_${idx}`;
+        const qid = `q_${idx}`;
+
+        const div = document.createElement("div");
+        div.className = "prod";
+        div.innerHTML = `
+          <div class="prod-top">
+            <input class="chk" id="${id}" type="checkbox" />
+            <div class="prod-main">
+              <label for="${id}" class="prod-name">${escapeHtmlName(name)}</label>
+              <div class="prod-hint">선택 후 수량을 입력하세요.</div>
+            </div>
             <input class="qty" id="${qid}" type="number" min="1" step="1" placeholder="수량" disabled />
-            <button class="qty-btn" id="${pid}" type="button" aria-label="수량 증가" disabled>+</button>
           </div>
-        </div>
-      `;
+        `;
 
-      root.appendChild(div);
+        root.appendChild(div);
 
-      const chk = div.querySelector(`#${CSS.escape(id)}`);
-      const qty = div.querySelector(`#${CSS.escape(qid)}`);
-      const minusBtn = div.querySelector(`#${CSS.escape(mid)}`);
-      const plusBtn  = div.querySelector(`#${CSS.escape(pid)}`);
+        const chk = div.querySelector(`#${CSS.escape(id)}`);
+        const qty = div.querySelector(`#${CSS.escape(qid)}`);
 
-      function clampQty(v){
-        const n = parseInt(v, 10);
-        if (!Number.isFinite(n) || n <= 0) return 1;
-        return n;
-      }
-
-      function setSelectedUI(on){
-        div.classList.toggle("selected", on);
-        qty.disabled = !on;
-        minusBtn.disabled = !on;
-        plusBtn.disabled = !on;
-        if (on) {
-          qty.value = qty.value ? clampQty(qty.value) : 1;
-          qty.focus();
-        } else {
-          qty.value = "";
+        function setSelectedUI(on){
+          div.classList.toggle("selected", on);
+          qty.disabled = !on;
+          if (on) {
+            qty.value = qty.value ? clampQty(qty.value) : 1;
+            qty.focus();
+          } else {
+            qty.value = "";
+          }
         }
-      }
 
-      chk.addEventListener("change", () => {
-        setSelectedUI(chk.checked);
-      });
+        chk.addEventListener("change", () => {
+          setSelectedUI(chk.checked);
+        });
 
-      minusBtn.addEventListener("click", () => {
-        if (qty.disabled) return;
-        const v = clampQty(qty.value || 1);
-        qty.value = Math.max(1, v - 1);
-      });
-
-      plusBtn.addEventListener("click", () => {
-        if (qty.disabled) return;
-        const v = clampQty(qty.value || 1);
-        qty.value = v + 1;
-      });
-
-      qty.addEventListener("blur", () => {
-        if (qty.disabled) return;
-        qty.value = clampQty(qty.value);
+        qty.addEventListener("blur", () => {
+          if (qty.disabled) return;
+          qty.value = clampQty(qty.value);
+        });
       });
     });
-  });
-}
+  }
 
   function collectItems() {
     const items = [];
@@ -468,10 +455,8 @@ function renderProducts() {
       const chk = document.getElementById(`p_${idx}`);
       const qtyEl = document.getElementById(`q_${idx}`);
       if (chk && chk.checked) {
-        const qty = parseInt(qtyEl.value, 10);
-        if (Number.isFinite(qty) && qty > 0) {
-          items.push({ product: name, qty });
-        }
+        const qty = clampQty(qtyEl.value);
+        items.push({ product: name, qty });
       }
     });
     return items;
@@ -562,7 +547,7 @@ function renderProducts() {
     }
   }
 
-  // ✅ 초기 렌더 (이게 없으면 상품이 안 보임)
+  // ✅ 초기 렌더
   renderProducts();
 
   // 전화번호 자동 포맷
