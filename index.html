@@ -11,13 +11,19 @@
   <style>
     :root { color-scheme: light; }
     * { box-sizing: border-box; }
+
+    /* ✅ 가로 튐(무한대 폭) 방지 핵심 */
+    html, body { width: 100%; overflow-x: hidden; }
+
     body {
       margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif;
       background: #f6f7f9;
       color: #111;
     }
+
     .wrap { max-width: 680px; margin: 0 auto; padding: 18px; }
+
     .card {
       background: #fff;
       border-radius: 14px;
@@ -25,12 +31,14 @@
       padding: 18px;
       margin-bottom: 14px;
     }
+
     h1 { font-size: 18px; margin: 0 0 6px; }
     .sub { margin: 0 0 14px; color: #555; font-size: 13px; line-height: 1.5; }
     .badge { display:inline-block; font-size:12px; padding:3px 8px; border-radius:999px; background:#eef3ff; color:#1f4fcc; border:1px solid #d6e2ff; }
 
     .row { margin: 12px 0; }
     label { display:block; font-size: 13px; color: #222; margin-bottom: 6px; }
+
     input, textarea, select, button {
       width: 100%;
       border-radius: 12px;
@@ -39,20 +47,19 @@
       font-size: 15px;
       outline: none;
       background: #fff;
+      min-width: 0; /* ✅ grid/flex 안에서 가로 튐 방지 */
     }
+
     textarea { min-height: 84px; resize: vertical; }
     input:focus, textarea:focus, select:focus {
       border-color: #5b8cff;
       box-shadow: 0 0 0 3px rgba(91,140,255,.15);
     }
+
     .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .grid3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-    .hint {
-      font-size: 12px;
-      color: #666;
-      line-height: 1.45;
-      margin-top: 6px;
-    }
+
+    .hint { font-size: 12px; color: #666; line-height: 1.45; margin-top: 6px; }
     .example {
       font-size: 12px;
       color: #555;
@@ -72,6 +79,7 @@
       padding: 13px 14px;
     }
     .btn:disabled { opacity: .55; cursor: not-allowed; }
+
     .btn-ghost {
       background: #eef3ff;
       color: #1f4fcc;
@@ -97,32 +105,56 @@
       padding: 12px;
       margin-top: 10px;
       background: #fcfcfd;
+      overflow: hidden; /* ✅ 내부가 길어도 카드 밖으로 밀지 않게 */
     }
+
+    /* ✅ PC/모바일 공통: 왼쪽(상품) + 오른쪽(수량) */
     .prod-top {
-  display: grid;
-  grid-template-columns: 1fr 110px;
-  gap: 10px;
-  align-items: center;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 110px; /* ✅ 왼쪽이 줄어들 수 있게 */
+      gap: 10px;
+      align-items: center;
     }
-    
-    @media (max-width: 480px) {
-  .prod-top {
-    grid-template-columns: 1fr;
-  }
-  .qty {
-    width: 100%;
-  }
-}
-    .prod-title { font-size: 14px; font-weight: 700; margin: 0; }
-    .prod-right { display:flex; gap:10px; align-items:center; }
-    .qty {
-      width: 110px;
-      text-align: center;
+
+    .prod-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
     }
+
+    /* ✅ 상품명이 길어도 가로로 안 늘리고 자연 줄바꿈 */
+    .prod-title label{
+      display: block;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      line-height: 1.35;
+    }
+
+    .prod-right{
+      display:flex;
+      align-items:center;
+      justify-content: flex-end;
+      min-width: 0;
+    }
+
+    .qty { width: 110px; text-align: center; }
     .qty[disabled] { background:#f3f4f6; color:#999; }
-    .chk { transform: translateY(2px); }
+
+    .chk { transform: translateY(2px); flex: 0 0 auto; }
+
     .small { font-size: 12px; color:#777; margin-top: 10px; }
     .hr { height:1px; background:#eef0f5; margin: 14px 0; border:0; }
+
+    /* ✅ 모바일에서 수량칸 약간만 슬림 */
+    @media (max-width: 480px) {
+      .wrap { padding: 14px; }
+      .grid2 { grid-template-columns: 1fr; }
+      .prod-top { grid-template-columns: minmax(0, 1fr) 92px; }
+      .qty { width: 92px; }
+    }
   </style>
 </head>
 
@@ -164,10 +196,10 @@
       <div class="row">
         <label>주소</label>
 
-        <!-- ✅ (구조만 정상화) -->
+        <!-- ✅ HTML 구조 정상화: grid3 안에 3개 요소를 정확히 넣기 -->
         <div class="grid3">
           <button class="btn-ghost" type="button" onclick="openPostcode()">주소 검색</button>
-          <input id="postcode" type="text" placeholder="우편번호" readonly /> </div>
+          <input id="postcode" type="text" placeholder="우편번호" readonly />
           <input id="baseAddress" type="text" placeholder="주소 검색을 눌러 선택" readonly />
         </div>
 
@@ -198,9 +230,10 @@
       <button id="submitBtn" class="btn" type="button" onclick="submitAll()">주문하기</button>
       <div id="toast" class="toast"></div>
       <div class="small">
-        주문하기를 누르신 후, 주문 완료! 메시지가 보일 때까지 잠시만 기다려주세요. 
+        주문하기를 누르신 후, 주문 완료! 메시지가 보일 때까지 잠시만 기다려주세요.
         <br>
-        ※ 주문/구매 확인 문의: 010-4982-5550 </div>
+        ※ 주문/구매 확인 문의: 010-4982-5550
+      </div>
     </div>
 
   </div>
@@ -294,10 +327,10 @@
         div.className = "prod";
         div.innerHTML = `
           <div class="prod-top">
-            <div style="flex:1;">
+            <div>
               <p class="prod-title">
                 <input class="chk" id="${id}" type="checkbox" />
-                <label for="${id}" style="display:inline; font-weight:700; cursor:pointer;">${escapeHtml(name)}</label>
+                <label for="${id}">${escapeHtml(name)}</label>
               </p>
               <div class="hint">선택 후 수량을 입력하세요.</div>
             </div>
@@ -346,14 +379,12 @@
 
     function validatePhone(phoneFormatted) {
       const d = digitsOnly(phoneFormatted);
-      if (d.length === 11 && d.startsWith("010")) return true;
-      return false;
+      return (d.length === 11 && d.startsWith("010"));
     }
 
     async function submitAll() {
       const btn = document.getElementById("submitBtn");
 
-      // ✅ 프론트 중복 방지: 요청 중이면 재호출 차단
       if (inFlight) return;
       inFlight = true;
 
@@ -392,7 +423,7 @@
         const address = `${baseAddress} ${detailAddress}`.trim();
 
         const payload = {
-          clientId: getClientId(), // ✅ 중복방지 강화
+          clientId: getClientId(),
           ordererName,
           receiverName,
           receiverPhone,
@@ -419,7 +450,6 @@
           return;
         }
 
-        // ✅ 서버 중복방지 응답 처리
         if (json && json.ok === false && json.error === "duplicate_order") {
           setToast("err", "이미 접수된 주문입니다.\n(최근 5분 이내 동일 주문)");
           btn.disabled = false;
