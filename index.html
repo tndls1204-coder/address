@@ -1,91 +1,136 @@
- <!doctype html>
+<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>배송지 입력</title>
+  <title>주문/배송지 입력</title>
 
   <!-- 다음(카카오) 주소검색 -->
   <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
   <style>
     :root { color-scheme: light; }
-    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif; background: #f6f7f9; }
-    .wrap { max-width: 560px; margin: 0 auto; padding: 18px; }
-    .card { background: #fff; border-radius: 14px; box-shadow: 0 6px 18px rgba(0,0,0,.06); padding: 18px; }
-    h1 { font-size: 18px; margin: 0 0 14px; }
-    .muted { color: #666; font-size: 13px; line-height: 1.45; margin: 0 0 16px; }
-    .row { display: grid; gap: 10px; margin: 12px 0; }
-    label { font-size: 13px; color: #222; }
-    input, textarea, button {
-      width: 100%;
-      box-sizing: border-box;
-      border-radius: 12px;
-      border: 1px solid #d8dde6;
-      padding: 12px 12px;
-      font-size: 15px;
-      outline: none;
-      background: #fff;
+    body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",Arial,sans-serif; background:#f6f7f9; }
+    .wrap { max-width: 720px; margin:0 auto; padding: 18px; }
+    .card { background:#fff; border-radius:14px; box-shadow:0 6px 18px rgba(0,0,0,.06); padding:18px; }
+    h1 { font-size:18px; margin:0 0 10px; }
+    .muted { color:#666; font-size:13px; line-height:1.45; margin:0 0 14px; }
+    .row { display:grid; gap:10px; margin:12px 0; }
+    label { font-size:13px; color:#222; }
+    input, textarea, button, select {
+      width:100%; box-sizing:border-box;
+      border-radius:12px; border:1px solid #d8dde6;
+      padding:12px; font-size:15px; outline:none; background:#fff;
     }
-    input:focus, textarea:focus { border-color: #5b8cff; box-shadow: 0 0 0 3px rgba(91,140,255,.15); }
-    .btn { border: 0; background: #2f6dff; color: #fff; font-weight: 700; cursor: pointer; padding: 13px 14px; }
-    .btn:disabled { opacity: .55; cursor: not-allowed; }
-    .btn-ghost { background: #eef3ff; color: #1f4fcc; border: 1px solid #d6e2ff; font-weight: 700; cursor: pointer; }
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .toast {
-      margin-top: 12px;
-      padding: 12px 12px;
-      border-radius: 12px;
-      font-size: 14px;
-      display: none;
-    }
-    .toast.ok { display:block; background:#ecfff1; border:1px solid #bdeccc; color:#146b2f; }
+    textarea { min-height:72px; resize:vertical; }
+    input:focus, textarea:focus, select:focus { border-color:#5b8cff; box-shadow:0 0 0 3px rgba(91,140,255,.15); }
+    .btn { border:0; background:#2f6dff; color:#fff; font-weight:700; cursor:pointer; padding:13px 14px; }
+    .btn:disabled { opacity:.55; cursor:not-allowed; }
+    .btn-ghost { background:#eef3ff; color:#1f4fcc; border:1px solid #d6e2ff; font-weight:700; cursor:pointer; }
+    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .grid3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
+    .toast { margin-top:12px; padding:12px; border-radius:12px; font-size:14px; display:none; }
+    .toast.ok  { display:block; background:#ecfff1; border:1px solid #bdeccc; color:#146b2f; }
     .toast.err { display:block; background:#fff1f1; border:1px solid #f0b9b9; color:#8a1f1f; }
-    .small { font-size: 12px; color:#777; margin-top: 10px; }
+    .small { font-size:12px; color:#777; margin-top:10px; }
+
+    .sectionTitle { margin-top:18px; padding-top:14px; border-top:1px solid #eef0f3; font-weight:800; font-size:14px; }
+    .products { border:1px solid #e7e9ee; border-radius:12px; padding:12px; }
+    .prodRow { display:grid; grid-template-columns: 22px 1fr 90px; gap:10px; align-items:center; padding:8px 0; border-bottom:1px dashed #eef0f3; }
+    .prodRow:last-child { border-bottom:0; }
+    .qty { text-align:center; }
+    .prodName { font-size:14px; color:#222; line-height:1.35; }
+    .hint { font-size:12px; color:#666; margin-top:6px; }
   </style>
 </head>
 
 <body>
   <div class="wrap">
     <div class="card">
-      <h1>배송지 입력</h1>
+      <h1>주문/배송지 입력</h1>
       <p class="muted">
-        아래에서 주소를 검색한 뒤 <b>상세주소</b>까지 입력하고 제출해 주세요.
+        주문 정보와 배송지를 입력해 주세요. 주소는 <b>주소검색</b> 후 <b>상세주소</b>까지 입력해야 제출됩니다.
       </p>
 
+      <div class="sectionTitle">주문자/수령인</div>
       <div class="row">
-        <label>주소</label>
         <div class="grid2">
+          <div>
+            <label>주문자 성함 *</label>
+            <input id="orderName" type="text" placeholder="예: 김수린" />
+          </div>
+          <div>
+            <label>수령인 성함 *</label>
+            <input id="recvName" type="text" placeholder="예: 홍길동" />
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div>
+            <label>수령인 연락처(휴대폰) *</label>
+            <input id="recvPhone" type="tel" placeholder="예: 010-1234-5678" />
+          </div>
+          <div>
+            <label>배송메세지(선택)</label>
+            <input id="deliveryMemo" type="text" placeholder="예: 문 앞에 놓아주세요" />
+          </div>
+        </div>
+      </div>
+
+      <div class="sectionTitle">배송지</div>
+      <div class="row">
+        <label>주소 *</label>
+        <div class="grid3">
           <input id="postcode" type="text" placeholder="우편번호" readonly />
           <button class="btn-ghost" type="button" onclick="openPostcode()">주소 검색</button>
+          <input id="roadAddress" type="text" placeholder="기본주소(도로명/지번)" readonly />
         </div>
-        <input id="roadAddress" type="text" placeholder="기본주소(도로명/지번)" readonly />
         <input id="detailAddress" type="text" placeholder="상세주소 (예: 101동 1004호)" />
+        <div class="hint">※ 로젠 업로드용 시트에서는 “기본주소+상세주소”를 합쳐서 사용하고, 응답 시트에는 분리 저장됩니다.</div>
+      </div>
+
+      <div class="sectionTitle">주문 상품/수량</div>
+      <div class="row">
+        <div class="products" id="productsBox"></div>
+        <div class="hint">※ 여러 상품 선택 가능. 수량은 각 상품별로 입력하세요.</div>
       </div>
 
       <div class="row">
-        <button id="submitBtn" class="btn" type="button" onclick="submitAddress()">제출</button>
+        <button id="submitBtn" class="btn" type="button" onclick="submitAll()">제출</button>
         <div id="toast" class="toast"></div>
-        <div class="small">제출 후 1~5초 내로 구글 응답시트에 반영됩니다.</div>
+        <div class="small">제출 후 구글시트에 반영됩니다. (네트워크 상황에 따라 1~5초)</div>
       </div>
-
-      <!-- ✅ CORS 회피: fetch 대신 form POST + hidden iframe -->
-      <form id="postForm" method="POST" target="hiddenFrame" style="display:none;">
-        <input type="hidden" name="address" id="hiddenAddress" />
-      </form>
-      <iframe name="hiddenFrame" style="display:none;"></iframe>
     </div>
   </div>
 
   <script>
-    // ✅ 여기에 너의 Apps Script 웹앱 exec URL을 넣어줘
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVas_iyXnQQymnwBBn31QEWfUHdwC5Ln6wTyDZekdCam41gXaKsux8LL3WGQiAJIJG/exec";
+    // ✅ 여기에 Apps Script "웹 앱 배포 URL (…/exec)" 붙여넣기
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQkNCCI5uL6QXCOHlfaU5RpZN65h9DJEpMQc0XctZN2jlDjBV-7wht0CFlzJn68Dbp/exec";
+
+    // ✅ 판매 상품 리스트 (필요하면 여기만 수정)
+    const PRODUCTS = [
+      "생과 특 15kg (16~20과)",
+      "전통건강즙(배즙) 10포 1박스",
+      "전통건강즙(배즙) 10포 3박스",
+      "전통건강즙(배즙) 30포 1박스",
+      "전통건강즙(배즙) 30포 2박스",
+      "도라지배즙 10포 1박스",
+      "도라지배즙 10포 3박스",
+      "도라지배즙 30포 1박스",
+      "도라지배즙 30포 2박스",
+      "배즙30+도라지배즙30 (2박스)"
+    ];
 
     function setToast(type, msg) {
       const el = document.getElementById("toast");
-      if (!type) { el.className = "toast"; el.textContent = ""; return; }
+      if (!type) { el.className = "toast"; el.style.display="none"; el.textContent=""; return; }
+      el.style.display = "block";
       el.className = "toast " + (type === "ok" ? "ok" : "err");
       el.textContent = msg;
+    }
+
+    function normalizePhone(s) {
+      return (s || "").trim();
     }
 
     function openPostcode() {
@@ -93,7 +138,6 @@
         oncomplete: function(data) {
           const postcode = data.zonecode || "";
           const addr = data.roadAddress || data.jibunAddress || "";
-
           document.getElementById("postcode").value = postcode;
           document.getElementById("roadAddress").value = addr;
           document.getElementById("detailAddress").focus();
@@ -101,35 +145,119 @@
       }).open();
     }
 
-    function submitAddress() {
+    function renderProducts() {
+      const box = document.getElementById("productsBox");
+      box.innerHTML = "";
+
+      PRODUCTS.forEach((name, idx) => {
+        const row = document.createElement("div");
+        row.className = "prodRow";
+        row.innerHTML = `
+          <input type="checkbox" id="p_${idx}" />
+          <div class="prodName">${escapeHtml(name)}</div>
+          <input class="qty" type="number" id="q_${idx}" min="1" step="1" placeholder="수량" disabled />
+        `;
+        box.appendChild(row);
+
+        const cb = row.querySelector(`#p_${idx}`);
+        const q = row.querySelector(`#q_${idx}`);
+        cb.addEventListener("change", () => {
+          q.disabled = !cb.checked;
+          if (cb.checked && !q.value) q.value = "1";
+          if (!cb.checked) q.value = "";
+        });
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, (m) => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[m]));
+    }
+
+    function collectSelectedProducts() {
+      const items = [];
+      PRODUCTS.forEach((name, idx) => {
+        const cb = document.getElementById(`p_${idx}`);
+        const q = document.getElementById(`q_${idx}`);
+        if (cb && cb.checked) {
+          const qty = parseInt((q.value || "").trim(), 10);
+          if (Number.isFinite(qty) && qty > 0) {
+            items.push({ name, qty });
+          }
+        }
+      });
+      return items;
+    }
+
+    async function submitAll() {
       const btn = document.getElementById("submitBtn");
       btn.disabled = true;
       setToast("", "");
 
-      const postcode = (document.getElementById("postcode").value || "").trim();
-      const baseAddr = (document.getElementById("roadAddress").value || "").trim();
-      const detail = (document.getElementById("detailAddress").value || "").trim();
-
-      if (!baseAddr) { setToast("err", "주소 검색을 먼저 해주세요."); btn.disabled = false; return; }
-      if (!detail) { setToast("err", "상세주소를 입력해 주세요."); btn.disabled = false; return; }
-
-      const fullAddress = `${postcode ? "(" + postcode + ") " : ""}${baseAddr} ${detail}`.trim();
-
-      // ✅ form POST로 전송(=CORS 없음)
-      const form = document.getElementById("postForm");
-      form.action = SCRIPT_URL;
-      document.getElementById("hiddenAddress").value = fullAddress;
-
       try {
-        form.submit();
-        setToast("ok", "제출 완료! 감사합니다. (시트 반영까지 잠시만 기다려 주세요)");
+        const orderName = (document.getElementById("orderName").value || "").trim();
+        const recvName  = (document.getElementById("recvName").value  || "").trim();
+        const recvPhone = normalizePhone(document.getElementById("recvPhone").value);
+        const memo      = (document.getElementById("deliveryMemo").value || "").trim();
+
+        const postcode  = (document.getElementById("postcode").value || "").trim();
+        const baseAddr  = (document.getElementById("roadAddress").value || "").trim();
+        const detail    = (document.getElementById("detailAddress").value || "").trim();
+
+        const items = collectSelectedProducts();
+
+        if (!orderName) { setToast("err","주문자 성함을 입력해 주세요."); btn.disabled=false; return; }
+        if (!recvName)  { setToast("err","수령인 성함을 입력해 주세요."); btn.disabled=false; return; }
+        if (!recvPhone) { setToast("err","수령인 연락처를 입력해 주세요."); btn.disabled=false; return; }
+        if (!baseAddr)  { setToast("err","주소 검색을 먼저 해주세요."); btn.disabled=false; return; }
+        if (!detail)    { setToast("err","상세주소를 입력해 주세요."); btn.disabled=false; return; }
+        if (items.length === 0) { setToast("err","주문 상품을 1개 이상 선택해 주세요."); btn.disabled=false; return; }
+
+        const fullAddress = `${postcode ? "(" + postcode + ") " : ""}${baseAddr} ${detail}`.trim();
+
+        const payload = {
+          orderName,
+          recvName,
+          recvPhone,
+          memo,
+          postcode,
+          baseAddr,
+          detailAddr: detail,
+          fullAddress,
+          items
+        };
+
+        // ✅ CORS 회피: 1) sendBeacon 우선 2) fetch no-cors fallback
+        const blob = new Blob([JSON.stringify(payload)], { type: "text/plain;charset=utf-8" });
+
+        let sent = false;
+        if (navigator.sendBeacon) {
+          sent = navigator.sendBeacon(SCRIPT_URL, blob);
+        }
+        if (!sent) {
+          await fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
+        }
+
+        setToast("ok", "제출 완료! 감사합니다.");
+        // 원하면 제출 후 잠금
+        // btn.disabled = true;
+
       } catch (e) {
-        setToast("err", "제출 중 오류가 발생했습니다: " + (e?.message || String(e)));
+        setToast("err", "네트워크 오류: " + (e && e.message ? e.message : String(e)));
+        btn.disabled = false;
+        return;
       } finally {
-        // UX상 바로 다시 누를 수 있게
-        setTimeout(() => { btn.disabled = false; }, 800);
+        btn.disabled = false;
       }
     }
+
+    renderProducts();
   </script>
 </body>
 </html>
