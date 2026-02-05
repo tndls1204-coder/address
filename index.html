@@ -399,7 +399,7 @@
 
         setToast("ok", "제출 완료! 감사합니다.\n주문서/로젠업로드 시트에 곧 반영됩니다.");
         // 성공 후 폼 잠금(현재 동작 유지)
-        btn.disabled = true;
+        btn.disabled = false;
 
       } catch (e) {
         setToast("err", "네트워크 오류: " + (e && e.message ? e.message : String(e)));
