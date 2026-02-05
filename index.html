@@ -20,7 +20,12 @@
       color: #111;
     }
 
-    .wrap { max-width: 680px; margin: 0 auto; padding: 18px; }
+    .wrap {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 18px;
+  width: 100%;
+}
 
     .card {
       background: #fff;
@@ -64,7 +69,11 @@
     }
 
     .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .grid3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .grid3 {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 10px;
+}
 
     .hint { font-size: 12px; color: #666; margin-top: 6px; line-height: 1.45; }
 
