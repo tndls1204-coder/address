@@ -1,4 +1,4 @@
- <!doctype html>
+<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
@@ -155,10 +155,10 @@
       <div class="row">
         <label>주소</label>
 
-        <!-- ✅ 우편번호 추가 (로젠/주문서에 유용) -->
+        <!-- ✅ (구조만 정상화) -->
         <div class="grid3">
           <button class="btn-ghost" type="button" onclick="openPostcode()">주소 검색</button>
-          <input id="postcode" type="text" placeholder="우편번호" readonly /></div>
+          <input id="postcode" type="text" placeholder="우편번호" readonly />
           <input id="baseAddress" type="text" placeholder="주소 검색을 눌러 선택" readonly />
         </div>
 
@@ -188,14 +188,13 @@
     <div class="card">
       <button id="submitBtn" class="btn" type="button" onclick="submitAll()">주문하기</button>
       <div id="toast" class="toast"></div>
-      <div class="small">주문하기 후, 주문 완료까지 잠시 기다려주세요. </div>
+      <div class="small">주문하기를 누르신 후, 주문 완료! 메시지가 보일 때까지 잠시만 기다려주세요. \n ※ 주문/구매 확인 문의: 010-4982-5550 </div>
     </div>
 
   </div>
 
-  <!-- ✅ JS는 반드시 script 태그 안에 -->
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbws3LtV9zd3Gd7m7OyzteuYZBxUy1oRRZbkSq74VxV4TA8wKh3S_P2uIpq3Z_on6tYAnQ/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzNMomX1v0mF6hda9nhjQ3ieDOQ32b5uDIjFP2nMQFDgjMGPdN4sAgB0BOk1Vs_LbeNCg/exec";
     const PRODUCTS = [
       "생과 배 특7.5kg (8~10과)",
       "생과 배 특15kg (16~20과)",
@@ -209,6 +208,20 @@
       "도라지배즙 30포 (2박스)",
       "배즙30+도라지배즙30 (2박스)"
     ];
+
+    // ✅ 중복방지(프론트): 같은 브라우저/기기 clientId 유지
+    const CLIENT_ID_KEY = "brfta_client_id_v1";
+    function getClientId() {
+      let id = localStorage.getItem(CLIENT_ID_KEY);
+      if (!id) {
+        id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + "_" + Math.random().toString(16).slice(2);
+        localStorage.setItem(CLIENT_ID_KEY, id);
+      }
+      return id;
+    }
+
+    // ✅ 제출 중 연타/중복 요청 방지(프론트)
+    let inFlight = false;
 
     function setToast(type, msg) {
       const el = document.getElementById("toast");
@@ -229,11 +242,9 @@
 
     function normalizePhone(value) {
       const digits = digitsOnly(value);
-      // 010 11자리
       if (digits.length === 11 && digits.startsWith("010")) {
         return `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}`;
       }
-      // 010 10자리(구형) 케이스도 유지
       if (digits.length === 10 && digits.startsWith("010")) {
         return `${digits.slice(0,3)}-${digits.slice(3,6)}-${digits.slice(6)}`;
       }
@@ -298,7 +309,6 @@
           }
         });
 
-        // 수량 직접 입력하다가 비정상 값이면 정리
         qty.addEventListener("blur", () => {
           if (qty.disabled) return;
           const v = parseInt(qty.value, 10);
@@ -324,13 +334,17 @@
 
     function validatePhone(phoneFormatted) {
       const d = digitsOnly(phoneFormatted);
-      // 가장 흔한 케이스만 빡세게: 010 + 8자리
       if (d.length === 11 && d.startsWith("010")) return true;
       return false;
     }
 
     async function submitAll() {
       const btn = document.getElementById("submitBtn");
+
+      // ✅ 프론트 중복 방지: 요청 중이면 재호출 차단
+      if (inFlight) return;
+      inFlight = true;
+
       btn.disabled = true;
       setToast("", "");
 
@@ -338,6 +352,7 @@
         if (!SCRIPT_URL || SCRIPT_URL.includes("PUT-YOUR-EXEC-URL-HERE")) {
           setToast("err", "SCRIPT_URL이 비어있습니다.\n웹앱 exec URL로 교체해 주세요.");
           btn.disabled = false;
+          inFlight = false;
           return;
         }
 
@@ -346,7 +361,7 @@
 
         const receiverPhoneInput = document.getElementById("receiverPhone");
         const receiverPhone = normalizePhone((receiverPhoneInput.value || "").trim());
-        receiverPhoneInput.value = receiverPhone; // 제출 시 한 번 더 정리
+        receiverPhoneInput.value = receiverPhone;
 
         const postcode = (document.getElementById("postcode").value || "").trim();
         const baseAddress = (document.getElementById("baseAddress").value || "").trim();
@@ -354,27 +369,27 @@
         const message = (document.getElementById("message").value || "").trim();
         const items = collectItems();
 
-        // Validation
-        if (!ordererName) { setToast("err", "주문자 성함을 입력해 주세요."); btn.disabled=false; return; }
-        if (!receiverName) { setToast("err", "수령인 성함을 입력해 주세요."); btn.disabled=false; return; }
-        if (!receiverPhone) { setToast("err", "수령인 연락처를 입력해 주세요."); btn.disabled=false; return; }
-        if (!validatePhone(receiverPhone)) { setToast("err", "연락처 형식이 올바르지 않습니다.\n예: 010-1234-5678"); btn.disabled=false; return; }
-        if (!baseAddress) { setToast("err", "주소 검색을 먼저 해주세요."); btn.disabled=false; return; }
-        if (!detailAddress) { setToast("err", "상세주소를 입력해 주세요."); btn.disabled=false; return; }
-        if (!items.length) { setToast("err", "주문 상품을 최소 1개 이상 선택해 주세요."); btn.disabled=false; return; }
+        if (!ordererName) { setToast("err", "주문자 성함을 입력해 주세요."); btn.disabled=false; inFlight=false; return; }
+        if (!receiverName) { setToast("err", "수령인 성함을 입력해 주세요."); btn.disabled=false; inFlight=false; return; }
+        if (!receiverPhone) { setToast("err", "수령인 연락처를 입력해 주세요."); btn.disabled=false; inFlight=false; return; }
+        if (!validatePhone(receiverPhone)) { setToast("err", "연락처 형식이 올바르지 않습니다.\n예: 010-1234-5678"); btn.disabled=false; inFlight=false; return; }
+        if (!baseAddress) { setToast("err", "주소 검색을 먼저 해주세요."); btn.disabled=false; inFlight=false; return; }
+        if (!detailAddress) { setToast("err", "상세주소를 입력해 주세요."); btn.disabled=false; inFlight=false; return; }
+        if (!items.length) { setToast("err", "주문 상품을 최소 1개 이상 선택해 주세요."); btn.disabled=false; inFlight=false; return; }
 
         const address = `${baseAddress} ${detailAddress}`.trim();
+
         const payload = {
+          clientId: getClientId(), // ✅ 중복방지 강화
           ordererName,
           receiverName,
           receiverPhone,
-          postcode,          // ✅ 추가
+          postcode,
           address,
           message,
           items
         };
 
-        // ✅ preflight(OPTIONS) 최소화를 위해 text/plain 사용
         const resp = await fetch(SCRIPT_URL, {
           method: "POST",
           mode: "cors",
@@ -388,28 +403,38 @@
         if (!resp.ok) {
           setToast("err", `전송 실패: HTTP ${resp.status}\n(스크립트 배포/권한/URL을 확인해 주세요)`);
           btn.disabled = false;
-          return;
-        }
-        if (json && json.ok === false) {
-          setToast("err", `전송 실패: ${json.error || "unknown_error"}`);
-          btn.disabled = false;
+          inFlight = false;
           return;
         }
 
-        setToast("ok", "주문하기 완료! 감사합니다.\n 주문/구매관련 확인이 필요한 경우 010-4982-5550 연락주세요.");
-        // 성공 후 폼 잠금(현재 동작 유지)
+        // ✅ 서버 중복방지 응답 처리
+        if (json && json.ok === false && json.error === "duplicate_order") {
+          setToast("err", "이미 접수된 주문입니다.\n(최근 5분 이내 동일 주문)");
+          btn.disabled = false;
+          inFlight = false;
+          return;
+        }
+
+        if (json && json.ok === false) {
+          setToast("err", `전송 실패: ${json.error || "unknown_error"}`);
+          btn.disabled = false;
+          inFlight = false;
+          return;
+        }
+
+        setToast("ok", "주문완료!   감사합니다.");
         btn.disabled = false;
+        inFlight = false;
 
       } catch (e) {
         setToast("err", "네트워크 오류: " + (e && e.message ? e.message : String(e)));
         btn.disabled = false;
+        inFlight = false;
       }
     }
 
-    // 초기화
     renderProducts();
 
-    // 전화번호: 입력 중에도 자동 포맷(부드럽게)
     (function initPhoneAutoFormat() {
       const el = document.getElementById("receiverPhone");
       let isComposing = false;
@@ -420,7 +445,6 @@
       el.addEventListener("input", () => {
         if (isComposing) return;
         const d = digitsOnly(el.value);
-        // 너무 공격적으로 커서 튀는 걸 막기 위해 "010" 시작할 때만 포맷
         if (d.startsWith("010")) el.value = normalizePhone(d);
       });
 
