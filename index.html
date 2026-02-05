@@ -20,12 +20,13 @@
       color: #111;
     }
 
-    .wrap {
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 18px;
-  width: 100%;
-}
+    /* ✅ GitHub 테마(.wrap) 충돌 방지: 유니크 컨테이너 */
+    .brfta-wrap{
+      max-width: 680px !important;
+      margin: 0 auto !important;
+      padding: 18px !important;
+      width: 100% !important;
+    }
 
     .card {
       background: #fff;
@@ -69,11 +70,14 @@
     }
 
     .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* ✅ 주소 영역: 버튼(고정폭) + 우편번호(유동폭) */
     .grid3 {
-  display: grid;
-  grid-template-columns: 140px minmax(0, 1fr);
-  gap: 10px;
-}
+      display: grid;
+      grid-template-columns: 140px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+    }
 
     .hint { font-size: 12px; color: #666; margin-top: 6px; line-height: 1.45; }
 
@@ -99,7 +103,7 @@
 
     .toast {
       margin-top: 12px;
-      padding: 12px;
+      padding: 12px 12px;
       border-radius: 12px;
       font-size: 14px;
       display: none;
@@ -132,7 +136,7 @@
     }
 
     /* =========================
-       상품 리스트 (최종: 체크 강조 + 수량 input만)
+       상품 리스트
        ========================= */
     .prod {
       border: 1px solid #eef0f5;
@@ -152,7 +156,7 @@
 
     .prod-top {
       display: grid;
-      grid-template-columns: 28px minmax(0, 1fr) 96px; /* ✅ 우측은 수량 input만 */
+      grid-template-columns: 28px minmax(0, 1fr) 96px;
       gap: 12px;
       align-items: start;
     }
@@ -165,7 +169,6 @@
 
     .prod-main { min-width: 0; }
 
-    /* 최대 2줄 + 괄호 안(1박스 등) 줄바꿈 금지용 span */
     .prod-name{
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -198,7 +201,7 @@
     }
 
     @media (max-width: 480px) {
-      .wrap { padding: 14px; }
+      .brfta-wrap { padding: 14px !important; }
       .grid2 { grid-template-columns: 1fr; }
 
       .prod-top{
@@ -211,7 +214,7 @@
 </head>
 
 <body>
-<div class="wrap">
+<div class="brfta-wrap">
 
   <div class="card">
     <div class="badge"> 배려프레스코프루타 </div>
@@ -245,9 +248,14 @@
 
     <div class="row">
       <label>주소</label>
+
+      <!-- ✅ 구조 정상화: grid3 닫힘 위치 수정 -->
       <div class="grid3">
         <button class="btn-ghost" type="button" onclick="openPostcode()">주소 검색</button>
-        <input id="postcode" type="text" placeholder="우편번호" readonly /></div>
+        <input id="postcode" type="text" placeholder="우편번호" readonly />
+      </div>
+
+      <div style="margin-top:10px;">
         <input id="baseAddress" type="text" placeholder="주소 검색을 눌러 선택" readonly />
       </div>
 
@@ -278,7 +286,7 @@
     <button id="submitBtn" class="btn" type="button" onclick="submitAll()">주문하기</button>
     <div id="toast" class="toast"></div>
     <div class="small">
-      주문하기를 누르신 후, 주문 완료! 메시지가 보일 때까지 잠시만 기다려주세요.
+      ‘주문하기’ 후, ‘주문 완료!’ 메시지까지 잠시만 기다려주세요.
       <br>
       ※ 주문/구매 확인 문의: 010-4982-5550
     </div>
@@ -299,7 +307,7 @@
       ]
     },
     {
-      title: "배즙/건강즙",
+      title: "배즙/배도라지즙",
       items: [
         "전통건강즙(배즙) 10포 (1박스)",
         "전통건강즙(배즙) 10포 (3박스)",
@@ -387,7 +395,6 @@
       .replaceAll("'", "&#039;");
   }
 
-  /* ✅ 괄호 부분 줄바꿈 방지 span(nb) 적용 */
   function escapeHtmlName(name){
     const safe = escapeHtml(name);
     return safe.replace(/\(([^)]+)\)/g, '<span class="nb">($1)</span>');
@@ -399,7 +406,6 @@
     return n;
   }
 
-  /* ✅ 그룹 헤더 + 상품 렌더링(수량 input만) */
   function renderProducts() {
     const root = document.getElementById("productList");
     root.innerHTML = "";
@@ -556,10 +562,8 @@
     }
   }
 
-  // ✅ 초기 렌더
   renderProducts();
 
-  // 전화번호 자동 포맷
   (function initPhoneAutoFormat() {
     const el = document.getElementById("receiverPhone");
     let isComposing = false;
