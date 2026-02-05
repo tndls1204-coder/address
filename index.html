@@ -129,6 +129,24 @@
       gap: 12px;
       align-items: start;
     }
+    
+    .group-head{
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f2f5ff;
+  border: 1px solid #d6e2ff;
+  color: #1f4fcc;
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.group-sub{
+  margin-top: 6px;
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 12px;
+}
 
     .chk {
       width: 20px;
@@ -138,14 +156,17 @@
 
     .prod-main { min-width: 0; }
 
-    .prod-name {
-      display: block;
-      font-size: 14px;
-      font-weight: 700;
-      line-height: 1.35;
-      overflow-wrap: anywhere;
-      cursor: pointer;
-    }
+    /* 상품명: 최대 2줄까지만 보이게 */
+.prod-name{
+  display: -webkit-box;
+  -webkit-line-clamp: 2;      /* 최대 2줄 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: keep-all;        /* 한글 단어 쪼개짐 방지 */
+}
+
+/* 괄호/박스 부분은 줄바꿈 금지 */
+.nb { white-space: nowrap; }
 
     .prod-hint {
       margin-top: 6px;
@@ -252,20 +273,32 @@
 
 <script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxV9yTUz9r7SXxNCy56JYlg9vr8AfTJNI_k5f9MYBoK_XeWngkE6xfTUvSYwpzzbgN4Vw/exec";
-  const PRODUCTS = [
-    "생과 배 특7.5kg (8~10과)",
-    "생과 배 특15kg (16~20과)",
-    "전통건강즙(배즙) 10포 (1박스)",
-    "전통건강즙(배즙) 10포 (3박스)",
-    "전통건강즙(배즙) 30포 (1박스)",
-    "전통건강즙(배즙) 30포 (2박스)",
-    "도라지배즙 10포 (1박스)",
-    "도라지배즙 10포 (3박스)",
-    "도라지배즙 30포 (1박스)",
-    "도라지배즙 30포 (2박스)",
-    "배즙30+도라지배즙30 (2박스)"
-  ];
-
+const PRODUCT_GROUPS = [
+  {
+    title: "생과",
+    items: [
+      "생과 배 특7.5kg (8~10과)",
+      "생과 배 특15kg (16~20과)"
+    ]
+  },
+  {
+    title: "배즙/건강즙",
+    items: [
+      "전통건강즙(배즙) 10포 (1박스)",
+      "전통건강즙(배즙) 10포 (3박스)",
+      "전통건강즙(배즙) 30포 (1박스)",
+      "전통건강즙(배즙) 30포 (2박스)",
+      "도라지배즙 10포 (1박스)",
+      "도라지배즙 10포 (3박스)",
+      "도라지배즙 30포 (1박스)",
+      "도라지배즙 30포 (2박스)",
+      "배즙30+도라지배즙30 (2박스)"
+    ]
+  }
+];
+  
+const PRODUCTS = PRODUCT_GROUPS.flatMap(g => g.items);
+  
   // ✅ 중복방지(프론트): 같은 브라우저/기기 clientId 유지
   const CLIENT_ID_KEY = "brfta_client_id_v1";
   function getClientId() {
@@ -335,14 +368,32 @@
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
   }
+  
+function escapeHtmlName(name){
+  // "(1박스)" "(3박스)" 같은 괄호를 줄바꿈 금지 처리
+  const safe = escapeHtml(name);
+  return safe.replace(/\(([^)]+)\)/g, '<span class="nb">($1)</span>');
+}
+  
+function renderProducts() {
+  const root = document.getElementById("productList");
+  root.innerHTML = "";
 
-  function renderProducts() {
-    const root = document.getElementById("productList");
-    root.innerHTML = "";
+  let globalIdx = 0;
 
-    PRODUCTS.forEach((name, idx) => {
+  PRODUCT_GROUPS.forEach((group) => {
+    // ✅ 그룹 헤더
+    const head = document.createElement("div");
+    head.className = "group-head";
+    head.innerHTML = `${escapeHtml(group.title)} <div class="group-sub">원하는 상품을 체크하고 수량을 입력해 주세요.</div>`;
+    root.appendChild(head);
+
+    group.items.forEach((name) => {
+      const idx = globalIdx++;
       const id = `p_${idx}`;
       const qid = `q_${idx}`;
+      const mid = `m_${idx}`;
+      const pid = `a_${idx}`;
 
       const div = document.createElement("div");
       div.className = "prod";
@@ -350,10 +401,14 @@
         <div class="prod-top">
           <input class="chk" id="${id}" type="checkbox" />
           <div class="prod-main">
-            <label for="${id}" class="prod-name">${escapeHtml(name)}</label>
+            <label for="${id}" class="prod-name">${escapeHtmlName(name)}</label>
             <div class="prod-hint">선택 후 수량을 입력하세요.</div>
           </div>
-          <input class="qty" id="${qid}" type="number" min="1" step="1" placeholder="수량" disabled />
+          <div class="qty-wrap">
+            <button class="qty-btn" id="${mid}" type="button" aria-label="수량 감소" disabled>-</button>
+            <input class="qty" id="${qid}" type="number" min="1" step="1" placeholder="수량" disabled />
+            <button class="qty-btn" id="${pid}" type="button" aria-label="수량 증가" disabled>+</button>
+          </div>
         </div>
       `;
 
@@ -361,24 +416,51 @@
 
       const chk = div.querySelector(`#${CSS.escape(id)}`);
       const qty = div.querySelector(`#${CSS.escape(qid)}`);
+      const minusBtn = div.querySelector(`#${CSS.escape(mid)}`);
+      const plusBtn  = div.querySelector(`#${CSS.escape(pid)}`);
 
-      chk.addEventListener("change", () => {
-        qty.disabled = !chk.checked;
-        if (chk.checked) {
-          qty.value = qty.value || "1";
+      function clampQty(v){
+        const n = parseInt(v, 10);
+        if (!Number.isFinite(n) || n <= 0) return 1;
+        return n;
+      }
+
+      function setSelectedUI(on){
+        div.classList.toggle("selected", on);
+        qty.disabled = !on;
+        minusBtn.disabled = !on;
+        plusBtn.disabled = !on;
+        if (on) {
+          qty.value = qty.value ? clampQty(qty.value) : 1;
           qty.focus();
         } else {
           qty.value = "";
         }
+      }
+
+      chk.addEventListener("change", () => {
+        setSelectedUI(chk.checked);
+      });
+
+      minusBtn.addEventListener("click", () => {
+        if (qty.disabled) return;
+        const v = clampQty(qty.value || 1);
+        qty.value = Math.max(1, v - 1);
+      });
+
+      plusBtn.addEventListener("click", () => {
+        if (qty.disabled) return;
+        const v = clampQty(qty.value || 1);
+        qty.value = v + 1;
       });
 
       qty.addEventListener("blur", () => {
         if (qty.disabled) return;
-        const v = parseInt(qty.value, 10);
-        if (!Number.isFinite(v) || v <= 0) qty.value = "1";
+        qty.value = clampQty(qty.value);
       });
     });
-  }
+  });
+}
 
   function collectItems() {
     const items = [];
