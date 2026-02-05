@@ -2,108 +2,170 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>주소 입력</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>배송지 입력</title>
 
-  <!-- 다음(카카오) 우편번호 -->
+  <!-- 다음(카카오) 주소검색 -->
   <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; }
-    h1 { margin: 0 0 16px; font-size: 36px; }
-    label { display:block; margin: 14px 0 6px; font-weight: 700; }
-    input { width: 100%; max-width: 420px; padding: 12px; font-size: 16px; box-sizing: border-box; }
-    .row { display:flex; gap:10px; max-width: 420px; }
-    .row input { flex:1; }
-    button { padding: 14px 18px; font-size: 18px; cursor: pointer; }
-    .muted { color:#666; margin-top:10px; }
-    .ok { margin-top: 14px; padding: 12px; background:#e9f7ef; border:1px solid #bfe7cf; display:none; }
-    .err { margin-top: 14px; padding: 12px; background:#fdecec; border:1px solid #f5bcbc; display:none; }
+    :root { color-scheme: light; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif; background: #f6f7f9; }
+    .wrap { max-width: 560px; margin: 0 auto; padding: 18px; }
+    .card { background: #fff; border-radius: 14px; box-shadow: 0 6px 18px rgba(0,0,0,.06); padding: 18px; }
+    h1 { font-size: 18px; margin: 0 0 14px; }
+    .muted { color: #666; font-size: 13px; line-height: 1.45; margin: 0 0 16px; }
+    .row { display: grid; gap: 10px; margin: 12px 0; }
+    label { font-size: 13px; color: #222; }
+    input, textarea, button {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 12px;
+      border: 1px solid #d8dde6;
+      padding: 12px 12px;
+      font-size: 15px;
+      outline: none;
+      background: #fff;
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    input:focus, textarea:focus { border-color: #5b8cff; box-shadow: 0 0 0 3px rgba(91,140,255,.15); }
+    .btn {
+      border: 0;
+      background: #2f6dff;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 13px 14px;
+    }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .btn-ghost {
+      background: #eef3ff;
+      color: #1f4fcc;
+      border: 1px solid #d6e2ff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .toast {
+      margin-top: 12px;
+      padding: 12px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      display: none;
+    }
+    .toast.ok { display:block; background:#ecfff1; border:1px solid #bdeccc; color:#146b2f; }
+    .toast.err { display:block; background:#fff1f1; border:1px solid #f0b9b9; color:#8a1f1f; }
+    .small { font-size: 12px; color:#777; margin-top: 10px; }
   </style>
 </head>
 
 <body>
-  <h1>주소 입력</h1>
+  <div class="wrap">
+    <div class="card">
+      <h1>배송지 입력</h1>
+      <p class="muted">
+        아래에서 주소를 검색한 뒤 <b>상세주소</b>까지 입력하고 제출해 주세요.
+      </p>
 
-  <!-- 사용자 입력 UI -->
-  <label>이름 *</label>
-  <input id="name" placeholder="예: 김수린" required />
+      <div class="row">
+        <label>주소</label>
+        <div class="grid2">
+          <input id="postcode" type="text" placeholder="우편번호" readonly />
+          <button class="btn-ghost" type="button" onclick="openPostcode()">주소 검색</button>
+        </div>
+        <input id="roadAddress" type="text" placeholder="기본주소(도로명/지번)" readonly />
+        <input id="detailAddress" type="text" placeholder="상세주소 (예: 101동 1004호)" />
+      </div>
 
-  <label>주소</label>
-  <div class="row">
-    <input id="postcode" placeholder="우편번호" readonly />
-    <button type="button" id="btnPostcode">주소검색</button>
+      <div class="row">
+        <button id="submitBtn" class="btn" type="button" onclick="submitAddress()">제출</button>
+        <div id="toast" class="toast"></div>
+        <div class="small">제출 후 1~3초 내로 구글 응답시트에 반영됩니다.</div>
+      </div>
+    </div>
   </div>
-  <input id="addr1" placeholder="기본주소" readonly style="margin-top:10px;" />
-  <label>상세주소</label>
-  <input id="addr2" placeholder="상세주소 (예: 444)" />
-
-  <div style="margin-top:18px;">
-    <button type="button" id="btnSubmit">제출</button>
-  </div>
-
-  <div class="muted">* 제출 시 구글폼(응답 시트)에 자동 기록됩니다.</div>
-  <div id="okBox" class="ok">접수 완료! (시트 반영까지 몇 초 걸릴 수 있어요)</div>
-  <div id="errBox" class="err"></div>
-
-  <!-- ✅ CORS 회피 핵심: fetch 대신 "form POST" -->
-  <iframe name="hidden_iframe" style="display:none;"></iframe>
-
-  <form id="gform"
-    action="https://docs.google.com/forms/d/e/1FAIpQLSdH3XgtcxCssGlHj0GkazWS9Wa5dkEBzGLTyTHCUd5OWkadrw/formResponse"
-    method="POST"
-    target="hidden_iframe"
-    style="display:none;"
-  >
-    <!-- 너가 확인한 entry 값 -->
-    <input name="entry.982136303" id="entryName" />
-    <input name="entry.480120806" id="entryAddress" />
-
-    <!-- 없어도 되는 경우가 많지만 넣어둠 -->
-    <input name="fvv" value="1" />
-    <input name="pageHistory" value="0" />
-  </form>
 
   <script>
-    const $ = (id) => document.getElementById(id);
+    // ✅ Outlook SafeLinks 안의 원본 exec URL을 추출한 값(직접 링크)
+    // (user가 준 safelinks 내부 url 파라미터: https://script.google.com/macros/s/AKfycbwyw9Y8Dx0Qxt5ZpicuLfld4raDnsz7iCxLVRMAiXskJ2YPSlbE0kToKF9Njw3LUd0D/exec)
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwyw9Y8Dx0Qxt5ZpicuLfld4raDnsz7iCxLVRMAiXskJ2YPSlbE0kToKF9Njw3LUd0D/exec";
 
-    $("btnPostcode").addEventListener("click", () => {
+    function setToast(type, msg) {
+      const el = document.getElementById("toast");
+      el.className = "toast " + (type === "ok" ? "ok" : "err");
+      el.textContent = msg;
+    }
+
+    function openPostcode() {
       new daum.Postcode({
         oncomplete: function(data) {
-          $("postcode").value = data.zonecode || "";
-          $("addr1").value = data.roadAddress || data.jibunAddress || "";
-          $("addr2").focus();
+          const postcode = data.zonecode || "";
+          const addr = data.roadAddress || data.jibunAddress || "";
+
+          document.getElementById("postcode").value = postcode;
+          document.getElementById("roadAddress").value = addr;
+
+          // 커서 자동 이동
+          document.getElementById("detailAddress").focus();
         }
       }).open();
-    });
+    }
 
-    $("btnSubmit").addEventListener("click", () => {
-      $("okBox").style.display = "none";
-      $("errBox").style.display = "none";
+    async function submitAddress() {
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = true;
+      setToast("", ""); // reset
 
-      const name = $("name").value.trim();
-      if (!name) {
-        $("errBox").textContent = "이름은 필수입니다.";
-        $("errBox").style.display = "block";
-        return;
+      try {
+        const postcode = (document.getElementById("postcode").value || "").trim();
+        const baseAddr = (document.getElementById("roadAddress").value || "").trim();
+        const detail = (document.getElementById("detailAddress").value || "").trim();
+
+        if (!baseAddr) {
+          setToast("err", "주소 검색을 먼저 해주세요.");
+          btn.disabled = false;
+          return;
+        }
+        if (!detail) {
+          setToast("err", "상세주소를 입력해 주세요.");
+          btn.disabled = false;
+          return;
+        }
+
+        const fullAddress = `${postcode ? "(" + postcode + ") " : ""}${baseAddr} ${detail}`;
+
+        // ✅ preflight(OPTIONS) 피하려고 Content-Type을 text/plain으로 사용
+        const resp = await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ address: fullAddress })
+        });
+
+        let json = null;
+        try { json = await resp.json(); } catch (_) {}
+
+        if (!resp.ok) {
+          setToast("err", `전송 실패: HTTP ${resp.status}`);
+          btn.disabled = false;
+          return;
+        }
+        if (json && json.ok === false) {
+          setToast("err", `전송 실패: ${json.error || "unknown_error"}`);
+          btn.disabled = false;
+          return;
+        }
+
+        setToast("ok", "제출 완료! 감사합니다.");
+        // 필요하면 입력 잠금
+        // document.getElementById("detailAddress").disabled = true;
+
+      } catch (e) {
+        setToast("err", "네트워크 오류: " + (e && e.message ? e.message : String(e)));
+      } finally {
+        btn.disabled = false;
       }
-
-      const postcode = $("postcode").value.trim();
-      const addr1 = $("addr1").value.trim();
-      const addr2 = $("addr2").value.trim();
-
-      // 주소는 네가 원하는 형식대로 합치면 됨
-      const fullAddress = [postcode, addr1, addr2].filter(Boolean).join(" ");
-
-      $("entryName").value = name;
-      $("entryAddress").value = fullAddress;
-
-      // 구글폼으로 제출(브라우저가 cross-origin form POST는 대부분 허용)
-      $("gform").submit();
-
-      // UI 표시(구글폼이 실제 성공 응답을 same-origin으로 못 돌려주므로, 일단 안내만)
-      $("okBox").style.display = "block";
-    });
+    }
   </script>
 </body>
 </html>
