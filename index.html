@@ -2,77 +2,99 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>주소 입력</title>
+
+  <!-- 다음(카카오) 우편번호 서비스 -->
+  <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
-    label { display:block; margin: 14px 0 6px; font-weight: 600; }
-    input { width: 100%; padding: 10px 12px; font-size: 16px; box-sizing: border-box; }
-    button { margin-top: 14px; padding: 12px 14px; font-size: 16px; cursor: pointer; }
-    .row { display:flex; gap: 10px; }
-    .row > * { flex:1; }
-    .hint { color:#666; font-size: 13px; margin-top: 8px; }
-    .ok { margin-top: 14px; color: #0a7; font-weight: 700; display:none; }
-    .err { margin-top: 14px; color: #c00; font-weight: 700; display:none; }
+    h1 { margin: 0 0 16px; }
+    label { display:block; margin: 14px 0 6px; font-weight: 700; }
+    input { width: 100%; max-width: 520px; padding: 12px; font-size: 16px; box-sizing: border-box; }
+    .row { display:flex; gap: 10px; max-width: 520px; }
+    .row input { flex: 1; }
+    button { padding: 12px 14px; font-size: 16px; cursor:pointer; }
+    .hint { margin-top: 10px; color:#666; font-size: 13px; }
+    .box { max-width: 520px; }
   </style>
-
-  <!-- ✅ 다음(카카오) 주소검색 -->
-  <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 </head>
+
 <body>
+  <div class="box">
+    <h1>주소 입력</h1>
 
-  <h2>주소 입력</h2>
+    <label for="name">이름 *</label>
+    <input id="name" placeholder="예: 김수린" />
 
-  <!-- ✅ 제출은 Apps Script Web App으로 (fetch 금지) -->
-  <!-- 🔥 여기에 본인 배포 URL 넣으세요 -->
-  <form id="submitForm" method="POST" action="https://script.google.com/macros/s/AKfycbwm-OU9TAUqW1PVUaCguxfFzIqi1ERg1M6qbrA3VL0irwD9yCx8SLQTFefOt1PsX1mL/exec" target="hidden_iframe">
-    <label>이름</label>
-    <input id="name" name="name" type="text" placeholder="예) 홍길동" required />
-
-    <label>주소</label>
+    <label>주소 *</label>
     <div class="row">
-      <input id="postcode" type="text" placeholder="우편번호" readonly />
-      <button type="button" onclick="openPostcode()">주소검색</button>
+      <input id="zonecode" placeholder="우편번호" readonly />
+      <button type="button" id="btnSearch">주소검색</button>
     </div>
-    <input id="roadAddress" name="address" type="text" placeholder="도로명 주소" readonly required />
-    <label>상세주소</label>
-    <input id="detail" type="text" placeholder="예) 101동 1001호" />
 
-    <div class="hint">* 제출 시 구글폼(응답 시트)에 자동 기록됩니다.</div>
+    <input id="address" placeholder="기본주소" readonly style="margin-top:10px;" />
+    <input id="detail" placeholder="상세주소 (예: 101동 1203호)" style="margin-top:10px;" />
 
-    <button type="submit">제출</button>
+    <button type="button" id="btnSubmit" style="margin-top:16px; width:100%; max-width:520px;">
+      제출(구글폼으로 이동)
+    </button>
 
-    <div id="ok" class="ok">✅ 접수 완료!</div>
-    <div id="err" class="err">❌ 전송 실패. 잠시 후 다시 시도해주세요.</div>
-  </form>
-
-  <!-- 화면 이동 방지용 -->
-  <iframe name="hidden_iframe" style="display:none;"></iframe>
+    <div class="hint">
+      버튼을 누르면 구글폼이 “미리 채워진 상태”로 열립니다. 그 화면에서 <b>최종 제출</b>만 눌러주세요.
+    </div>
+  </div>
 
   <script>
-    function openPostcode() {
+    // ✅ 너의 구글폼(viewform) URL
+    const FORM_VIEW_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdH3XgtcxCssGlHj0GkazWS9Wa5dkEBzGLTyTHCUd5OWkadrw/viewform";
+
+    // ✅ entry 번호 (너가 확인한 값)
+    const ENTRY_NAME = "entry.982136303";
+    const ENTRY_ADDR = "entry.480120806";
+
+    // 다음 주소검색
+    document.getElementById("btnSearch").addEventListener("click", () => {
       new daum.Postcode({
         oncomplete: function(data) {
-          document.getElementById('postcode').value = data.zonecode || "";
-          document.getElementById('roadAddress').value = data.roadAddress || data.address || "";
-          document.getElementById('detail').focus();
+          document.getElementById("zonecode").value = data.zonecode || "";
+          document.getElementById("address").value = data.roadAddress || data.jibunAddress || "";
+          document.getElementById("detail").focus();
         }
       }).open();
-    }
-
-    // 주소 + 상세주소 합치기
-    document.getElementById('submitForm').addEventListener('submit', function(e) {
-      const road = document.getElementById('roadAddress').value.trim();
-      const detail = document.getElementById('detail').value.trim();
-      if (detail) {
-        // Apps Script로 보낼 address 값을 합쳐서 넣음
-        document.getElementById('roadAddress').value = road + " " + detail;
-      }
-
-      // UX 표시 (실제 성공 여부는 WebApp 응답을 읽지 않아도 시트엔 들어감)
-      document.getElementById('ok').style.display = 'block';
-      document.getElementById('err').style.display = 'none';
     });
+
+    // 구글폼 미리채움 링크로 이동
+    document.getElementById("btnSubmit").addEventListener("click", () => {
+      const name = (document.getElementById("name").value || "").trim();
+      const addr1 = (document.getElementById("address").value || "").trim();
+      const addr2 = (document.getElementById("detail").value || "").trim();
+      const zone = (document.getElementById("zonecode").value || "").trim();
+
+      if (!name) { alert("이름을 입력해 주세요."); return; }
+      if (!addr1) { alert("주소검색으로 기본주소를 선택해 주세요."); return; }
+
+      // 주소 한 칸에 합쳐서 넣기 (우편번호+기본주소+상세주소)
+      const fullAddress = `[${zone}] ${addr1}${addr2 ? " " + addr2 : ""}`;
+
+      // ✅ 구글폼 “미리채움” 쿼리: usp=pp_url + entry.xxx=값
+      const url =
+        `${FORM_VIEW_URL}?usp=pp_url` +
+        `&${ENTRY_NAME}=${encodeURIComponent(name)}` +
+        `&${ENTRY_ADDR}=${encodeURIComponent(fullAddress)}`;
+
+      // 이동
+      window.location.href = url;
+    });
+
+    // (선택) 카톡으로 전달할 때 URL 파라미터로 이름을 미리 넣고 싶으면:
+    // ?name=김수린 형태로 받도록
+    (function prefillFromQuery(){
+      const p = new URLSearchParams(location.search);
+      const qName = p.get("name");
+      if (qName) document.getElementById("name").value = qName;
+    })();
   </script>
 </body>
 </html>
