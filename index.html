@@ -1,4 +1,4 @@
-<!doctype html>
+ <!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
@@ -27,24 +27,10 @@
       outline: none;
       background: #fff;
     }
-    textarea { min-height: 72px; resize: vertical; }
     input:focus, textarea:focus { border-color: #5b8cff; box-shadow: 0 0 0 3px rgba(91,140,255,.15); }
-    .btn {
-      border: 0;
-      background: #2f6dff;
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-      padding: 13px 14px;
-    }
+    .btn { border: 0; background: #2f6dff; color: #fff; font-weight: 700; cursor: pointer; padding: 13px 14px; }
     .btn:disabled { opacity: .55; cursor: not-allowed; }
-    .btn-ghost {
-      background: #eef3ff;
-      color: #1f4fcc;
-      border: 1px solid #d6e2ff;
-      font-weight: 700;
-      cursor: pointer;
-    }
+    .btn-ghost { background: #eef3ff; color: #1f4fcc; border: 1px solid #d6e2ff; font-weight: 700; cursor: pointer; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .toast {
       margin-top: 12px;
@@ -80,18 +66,24 @@
       <div class="row">
         <button id="submitBtn" class="btn" type="button" onclick="submitAddress()">제출</button>
         <div id="toast" class="toast"></div>
-        <div class="small">제출 후 1~3초 내로 구글 응답시트에 반영됩니다.</div>
+        <div class="small">제출 후 1~5초 내로 구글 응답시트에 반영됩니다.</div>
       </div>
+
+      <!-- ✅ CORS 회피: fetch 대신 form POST + hidden iframe -->
+      <form id="postForm" method="POST" target="hiddenFrame" style="display:none;">
+        <input type="hidden" name="address" id="hiddenAddress" />
+      </form>
+      <iframe name="hiddenFrame" style="display:none;"></iframe>
     </div>
   </div>
 
   <script>
-    // ✅ Outlook SafeLinks 안의 원본 exec URL을 추출한 값(직접 링크)
-    // (user가 준 safelinks 내부 url 파라미터: https://script.google.com/macros/s/AKfycbwyw9Y8Dx0Qxt5ZpicuLfld4raDnsz7iCxLVRMAiXskJ2YPSlbE0kToKF9Njw3LUd0D/exec)
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwyw9Y8Dx0Qxt5ZpicuLfld4raDnsz7iCxLVRMAiXskJ2YPSlbE0kToKF9Njw3LUd0D/exec";
+    // ✅ 여기에 너의 Apps Script 웹앱 exec URL을 넣어줘
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVas_iyXnQQymnwBBn31QEWfUHdwC5Ln6wTyDZekdCam41gXaKsux8LL3WGQiAJIJG/exec";
 
     function setToast(type, msg) {
       const el = document.getElementById("toast");
+      if (!type) { el.className = "toast"; el.textContent = ""; return; }
       el.className = "toast " + (type === "ok" ? "ok" : "err");
       el.textContent = msg;
     }
@@ -104,66 +96,38 @@
 
           document.getElementById("postcode").value = postcode;
           document.getElementById("roadAddress").value = addr;
-
-          // 커서 자동 이동
           document.getElementById("detailAddress").focus();
         }
       }).open();
     }
 
-    async function submitAddress() {
+    function submitAddress() {
       const btn = document.getElementById("submitBtn");
       btn.disabled = true;
-      setToast("", ""); // reset
+      setToast("", "");
+
+      const postcode = (document.getElementById("postcode").value || "").trim();
+      const baseAddr = (document.getElementById("roadAddress").value || "").trim();
+      const detail = (document.getElementById("detailAddress").value || "").trim();
+
+      if (!baseAddr) { setToast("err", "주소 검색을 먼저 해주세요."); btn.disabled = false; return; }
+      if (!detail) { setToast("err", "상세주소를 입력해 주세요."); btn.disabled = false; return; }
+
+      const fullAddress = `${postcode ? "(" + postcode + ") " : ""}${baseAddr} ${detail}`.trim();
+
+      // ✅ form POST로 전송(=CORS 없음)
+      const form = document.getElementById("postForm");
+      form.action = SCRIPT_URL;
+      document.getElementById("hiddenAddress").value = fullAddress;
 
       try {
-        const postcode = (document.getElementById("postcode").value || "").trim();
-        const baseAddr = (document.getElementById("roadAddress").value || "").trim();
-        const detail = (document.getElementById("detailAddress").value || "").trim();
-
-        if (!baseAddr) {
-          setToast("err", "주소 검색을 먼저 해주세요.");
-          btn.disabled = false;
-          return;
-        }
-        if (!detail) {
-          setToast("err", "상세주소를 입력해 주세요.");
-          btn.disabled = false;
-          return;
-        }
-
-        const fullAddress = `${postcode ? "(" + postcode + ") " : ""}${baseAddr} ${detail}`;
-
-        // ✅ preflight(OPTIONS) 피하려고 Content-Type을 text/plain으로 사용
-        const resp = await fetch(SCRIPT_URL, {
-          method: "POST",
-          mode: "cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ address: fullAddress })
-        });
-
-        let json = null;
-        try { json = await resp.json(); } catch (_) {}
-
-        if (!resp.ok) {
-          setToast("err", `전송 실패: HTTP ${resp.status}`);
-          btn.disabled = false;
-          return;
-        }
-        if (json && json.ok === false) {
-          setToast("err", `전송 실패: ${json.error || "unknown_error"}`);
-          btn.disabled = false;
-          return;
-        }
-
-        setToast("ok", "제출 완료! 감사합니다.");
-        // 필요하면 입력 잠금
-        // document.getElementById("detailAddress").disabled = true;
-
+        form.submit();
+        setToast("ok", "제출 완료! 감사합니다. (시트 반영까지 잠시만 기다려 주세요)");
       } catch (e) {
-        setToast("err", "네트워크 오류: " + (e && e.message ? e.message : String(e)));
+        setToast("err", "제출 중 오류가 발생했습니다: " + (e?.message || String(e)));
       } finally {
-        btn.disabled = false;
+        // UX상 바로 다시 누를 수 있게
+        setTimeout(() => { btn.disabled = false; }, 800);
       }
     }
   </script>
