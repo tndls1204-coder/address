@@ -99,13 +99,22 @@
       background: #fcfcfd;
     }
     .prod-top {
-      display:flex;
-      gap: 10px;
-      align-items: flex-start;
-      justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr 110px;
+  gap: 10px;
+  align-items: center;
     }
+    
+    @media (max-width: 480px) {
+  .prod-top {
+    grid-template-columns: 1fr;
+  }
+  .qty {
+    width: 100%;
+  }
+}
     .prod-title { font-size: 14px; font-weight: 700; margin: 0; }
-    .prod-right { display:flex; gap:10px; align-items:center; min-width: 200px; }
+    .prod-right { display:flex; gap:10px; align-items:center; }
     .qty {
       width: 110px;
       text-align: center;
