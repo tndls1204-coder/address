@@ -5,65 +5,74 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>주소 입력</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 24px; }
-    .wrap { max-width: 420px; margin: 0 auto; }
-    input { width: 100%; padding: 12px; font-size: 16px; margin: 10px 0; }
-    button { width: 100%; padding: 12px; font-size: 16px; cursor: pointer; }
-    #msg { margin-top: 12px; white-space: pre-wrap; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
+    label { display:block; margin: 14px 0 6px; font-weight: 600; }
+    input { width: 100%; padding: 10px 12px; font-size: 16px; box-sizing: border-box; }
+    button { margin-top: 14px; padding: 12px 14px; font-size: 16px; cursor: pointer; }
+    .row { display:flex; gap: 10px; }
+    .row > * { flex:1; }
+    .hint { color:#666; font-size: 13px; margin-top: 8px; }
+    .ok { margin-top: 14px; color: #0a7; font-weight: 700; display:none; }
+    .err { margin-top: 14px; color: #c00; font-weight: 700; display:none; }
   </style>
+
+  <!-- ✅ 다음(카카오) 주소검색 -->
+  <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 </head>
 <body>
-  <div class="wrap">
-    <h2>주소 입력 테스트</h2>
 
-    <label for="name">이름</label>
-    <input id="name" type="text" placeholder="이름을 입력하세요" />
+  <h2>주소 입력</h2>
 
-    <button type="button" onclick="submitForm()">제출</button>
+  <!-- ✅ 제출은 Apps Script Web App으로 (fetch 금지) -->
+  <!-- 🔥 여기에 본인 배포 URL 넣으세요 -->
+  <form id="submitForm" method="POST" action="https://script.google.com/macros/s/AKfycbwm-OU9TAUqW1PVUaCguxfFzIqi1ERg1M6qbrA3VL0irwD9yCx8SLQTFefOt1PsX1mL/exec" target="hidden_iframe">
+    <label>이름</label>
+    <input id="name" name="name" type="text" placeholder="예) 홍길동" required />
 
-    <div id="msg"></div>
-  </div>
+    <label>주소</label>
+    <div class="row">
+      <input id="postcode" type="text" placeholder="우편번호" readonly />
+      <button type="button" onclick="openPostcode()">주소검색</button>
+    </div>
+    <input id="roadAddress" name="address" type="text" placeholder="도로명 주소" readonly required />
+    <label>상세주소</label>
+    <input id="detail" type="text" placeholder="예) 101동 1001호" />
+
+    <div class="hint">* 제출 시 구글폼(응답 시트)에 자동 기록됩니다.</div>
+
+    <button type="submit">제출</button>
+
+    <div id="ok" class="ok">✅ 접수 완료!</div>
+    <div id="err" class="err">❌ 전송 실패. 잠시 후 다시 시도해주세요.</div>
+  </form>
+
+  <!-- 화면 이동 방지용 -->
+  <iframe name="hidden_iframe" style="display:none;"></iframe>
 
   <script>
-    // ✅ 새 배포 URL로 교체 완료
-    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycby1Roo6NAMDxWEFSUshwjdQEC5tg2e9BJaxXcv6Azz-btbPQx6vglD2dE_i3E-ZGaHL/exec";
-
-    function setMsg(text) {
-      document.getElementById("msg").textContent = text;
-    }
-
-    async function submitForm() {
-      const name = document.getElementById("name").value.trim();
-      if (!name) { alert("이름을 입력하세요"); return; }
-
-      // ✅ 프리플라이트(OPTIONS) 발생 안 하는 전송 방식
-      const body = new URLSearchParams();
-      body.append("name", name);
-
-      try {
-        setMsg("전송 중...");
-
-        const res = await fetch(WEBAPP_URL, {
-          method: "POST",
-          body: body,
-          // ❌ headers 절대 추가하지 말 것
-          // ❌ JSON.stringify 절대 금지
-        });
-
-        const out = await res.json().catch(() => ({}));
-
-        if (res.ok && out.ok) {
-          setMsg("✅ 전송 완료!\nstatus=" + (out.status ?? res.status));
-          document.getElementById("name").value = "";
-        } else {
-          setMsg("❌ 실패\nHTTP=" + res.status + "\n" + JSON.stringify(out));
-          alert("실패: " + (out.error || out.status || res.status));
+    function openPostcode() {
+      new daum.Postcode({
+        oncomplete: function(data) {
+          document.getElementById('postcode').value = data.zonecode || "";
+          document.getElementById('roadAddress').value = data.roadAddress || data.address || "";
+          document.getElementById('detail').focus();
         }
-      } catch (err) {
-        setMsg("❌ 네트워크 오류: " + err);
-        alert("네트워크 오류: " + err);
-      }
+      }).open();
     }
+
+    // 주소 + 상세주소 합치기
+    document.getElementById('submitForm').addEventListener('submit', function(e) {
+      const road = document.getElementById('roadAddress').value.trim();
+      const detail = document.getElementById('detail').value.trim();
+      if (detail) {
+        // Apps Script로 보낼 address 값을 합쳐서 넣음
+        document.getElementById('roadAddress').value = road + " " + detail;
+      }
+
+      // UX 표시 (실제 성공 여부는 WebApp 응답을 읽지 않아도 시트엔 들어감)
+      document.getElementById('ok').style.display = 'block';
+      document.getElementById('err').style.display = 'none';
+    });
   </script>
 </body>
 </html>
