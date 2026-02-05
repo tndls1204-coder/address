@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>배려프레스코푸르타 주문/배송지 입력</title>
+  <title>배려프레스코프루타 주문/배송지 입력</title>
 
   <!-- 다음(카카오) 주소검색 -->
   <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
@@ -12,9 +12,6 @@
     :root { color-scheme: light; }
     * { box-sizing: border-box; }
 
-    /* ✅ 가로 튐(무한대 폭) 방지 핵심 */
-    html, body { width: 100%; overflow-x: hidden; }
-
     body {
       margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif;
@@ -22,7 +19,11 @@
       color: #111;
     }
 
-    .wrap { max-width: 680px; margin: 0 auto; padding: 18px; }
+    .wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 18px;
+    }
 
     .card {
       background: #fff;
@@ -34,40 +35,59 @@
 
     h1 { font-size: 18px; margin: 0 0 6px; }
     .sub { margin: 0 0 14px; color: #555; font-size: 13px; line-height: 1.5; }
-    .badge { display:inline-block; font-size:12px; padding:3px 8px; border-radius:999px; background:#eef3ff; color:#1f4fcc; border:1px solid #d6e2ff; }
+
+    .badge {
+      display:inline-block;
+      font-size:12px;
+      padding:3px 8px;
+      border-radius:999px;
+      background:#eef3ff;
+      color:#1f4fcc;
+      border:1px solid #d6e2ff;
+      margin-bottom: 6px;
+    }
 
     .row { margin: 12px 0; }
-    label { display:block; font-size: 13px; color: #222; margin-bottom: 6px; }
 
-    input, textarea, select, button {
+    label {
+      display:block;
+      font-size: 13px;
+      color: #222;
+      margin-bottom: 6px;
+    }
+
+    input, textarea, button {
       width: 100%;
       border-radius: 12px;
       border: 1px solid #d8dde6;
-      padding: 12px 12px;
+      padding: 12px;
       font-size: 15px;
       outline: none;
       background: #fff;
-      min-width: 0; /* ✅ grid/flex 안에서 가로 튐 방지 */
     }
 
-    textarea { min-height: 84px; resize: vertical; }
-    input:focus, textarea:focus, select:focus {
+    input:focus, textarea:focus {
       border-color: #5b8cff;
       box-shadow: 0 0 0 3px rgba(91,140,255,.15);
     }
 
-    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .grid3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .grid2 {
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
 
-    .hint { font-size: 12px; color: #666; line-height: 1.45; margin-top: 6px; }
-    .example {
+    .grid3 {
+      display:grid;
+      grid-template-columns: 140px 1fr;
+      gap: 10px;
+    }
+
+    .hint {
       font-size: 12px;
-      color: #555;
-      background: #fafbff;
-      border: 1px dashed #d6e2ff;
-      border-radius: 12px;
-      padding: 10px;
-      margin-top: 8px;
+      color: #666;
+      margin-top: 6px;
+      line-height: 1.45;
     }
 
     .btn {
@@ -77,8 +97,13 @@
       font-weight: 800;
       cursor: pointer;
       padding: 13px 14px;
+      border-radius: 12px;
     }
-    .btn:disabled { opacity: .55; cursor: not-allowed; }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
 
     .btn-ghost {
       background: #eef3ff;
@@ -86,18 +111,35 @@
       border: 1px solid #d6e2ff;
       font-weight: 800;
       cursor: pointer;
+      border-radius: 12px;
     }
 
     .toast {
       margin-top: 12px;
-      padding: 12px 12px;
+      padding: 12px;
       border-radius: 12px;
       font-size: 14px;
       display: none;
       white-space: pre-line;
     }
-    .toast.ok  { display:block; background:#ecfff1; border:1px solid #bdeccc; color:#146b2f; }
-    .toast.err { display:block; background:#fff1f1; border:1px solid #f0b9b9; color:#8a1f1f; }
+
+    .toast.ok  {
+      display:block;
+      background:#ecfff1;
+      border:1px solid #bdeccc;
+      color:#146b2f;
+    }
+
+    .toast.err {
+      display:block;
+      background:#fff1f1;
+      border:1px solid #f0b9b9;
+      color:#8a1f1f;
+    }
+
+    /* =========================
+       상품 리스트 (최종 고정 레이아웃)
+       ========================= */
 
     .prod {
       border: 1px solid #eef0f5;
@@ -105,395 +147,145 @@
       padding: 12px;
       margin-top: 10px;
       background: #fcfcfd;
-      overflow: hidden; /* ✅ 내부가 길어도 카드 밖으로 밀지 않게 */
+      overflow: hidden;
     }
 
-    /* ✅ PC/모바일 공통: 왼쪽(상품) + 오른쪽(수량) */
     .prod-top {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 110px; /* ✅ 왼쪽이 줄어들 수 있게 */
-      gap: 10px;
-      align-items: center;
+      grid-template-columns: 28px minmax(0, 1fr) 110px;
+      gap: 12px;
+      align-items: start;
     }
 
-    .prod-title {
+    .chk {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+    }
+
+    .prod-main {
+      min-width: 0;
+    }
+
+    .prod-name {
+      display: block;
       font-size: 14px;
       font-weight: 700;
-      margin: 0;
-      display: flex;
-      gap: 8px;
-      align-items: flex-start;
-    }
-
-    /* ✅ 상품명이 길어도 가로로 안 늘리고 자연 줄바꿈 */
-    .prod-title label{
-      display: block;
-      min-width: 0;
-      overflow-wrap: anywhere;
       line-height: 1.35;
+      overflow-wrap: anywhere;
     }
 
-    .prod-right{
-      display:flex;
-      align-items:center;
-      justify-content: flex-end;
-      min-width: 0;
+    .prod-hint {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #666;
     }
 
-    .qty { width: 110px; text-align: center; }
-    .qty[disabled] { background:#f3f4f6; color:#999; }
+    .qty {
+      width: 110px;
+      text-align: center;
+    }
 
-    .chk { transform: translateY(2px); flex: 0 0 auto; }
+    .qty[disabled] {
+      background:#f3f4f6;
+      color:#999;
+    }
 
-    .small { font-size: 12px; color:#777; margin-top: 10px; }
-    .hr { height:1px; background:#eef0f5; margin: 14px 0; border:0; }
-
-    /* ✅ 모바일에서 수량칸 약간만 슬림 */
     @media (max-width: 480px) {
-      .wrap { padding: 14px; }
-      .grid2 { grid-template-columns: 1fr; }
-      .prod-top { grid-template-columns: minmax(0, 1fr) 92px; }
+      .prod-top {
+        grid-template-columns: 28px minmax(0, 1fr) 92px;
+        gap: 10px;
+      }
       .qty { width: 92px; }
+    }
+
+    .small {
+      font-size: 12px;
+      color:#777;
+      margin-top: 10px;
+    }
+
+    .hr {
+      height:1px;
+      background:#eef0f5;
+      margin: 14px 0;
+      border:0;
     }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
+<div class="wrap">
 
-    <div class="card">
-      <div class="badge"> 배려프레스코프루타 </div>
-      <h1> 주문 / 배송정보 입력</h1>
-      <p class="sub">
-        <span style="color:#777;">(주소는 ‘주소 검색’으로 선택 후 상세주소까지 꼭 입력해 주세요.)</span>
-      </p>
-    </div>
-
-    <div class="card">
-      <h1>1) 주문자 / 수령인 정보</h1>
-
-      <div class="row grid2">
-        <div>
-          <label>주문자 성함</label>
-          <input id="ordererName" type="text" placeholder="예: 홍길동" autocomplete="name" />
-        </div>
-        <div>
-          <label>수령인 성함 (배송 받는 분)</label>
-          <input id="receiverName" type="text" placeholder="예: 이순신" autocomplete="name" />
-        </div>
-      </div>
-
-      <div class="row">
-        <label>수령인 연락처</label>
-        <input id="receiverPhone" type="tel" inputmode="numeric" placeholder="예: 010-1234-5678" autocomplete="tel" />
-        <div class="hint">숫자만 입력해도 자동으로 010-1234-5678 형태로 정리됩니다.</div>
-      </div>
-
-      <hr class="hr"/>
-
-      <h1>2) 배송지</h1>
-
-      <div class="row">
-        <label>주소</label>
-
-        <!-- ✅ HTML 구조 정상화: grid3 안에 3개 요소를 정확히 넣기 -->
-        <div class="grid3">
-          <button class="btn-ghost" type="button" onclick="openPostcode()">주소 검색</button>
-          <input id="postcode" type="text" placeholder="우편번호" readonly />
-          <input id="baseAddress" type="text" placeholder="주소 검색을 눌러 선택" readonly />
-        </div>
-
-        <div style="margin-top:10px;">
-          <input id="detailAddress" type="text" placeholder="상세주소 (예: 101동 1004호)" />
-          <div class="hint">상세주소 미입력 시 반송/오배송 위험이 있습니다.</div>
-        </div>
-      </div>
-
-      <div class="row">
-        <label>배송 메세지 (선택)</label>
-        <input id="message" type="text" placeholder="예: 문 앞에 놓아주세요."/>
-      </div>
-    </div>
-
-    <div class="card">
-      <h1>3) 주문 상품 & 수량</h1>
-      <p class="sub">원하는 상품을 체크하고, 각 상품의 <b>수량</b>을 입력해 주세요.</p>
-
-      <div id="productList"></div>
-
-      <div class="small">
-        ※ 대량 구매 별도 문의 <b>(010-4982-5550)/ sales@brfta.com </b> <br/>
-      </div>
-    </div>
-
-    <div class="card">
-      <button id="submitBtn" class="btn" type="button" onclick="submitAll()">주문하기</button>
-      <div id="toast" class="toast"></div>
-      <div class="small">
-        주문하기를 누르신 후, 주문 완료! 메시지가 보일 때까지 잠시만 기다려주세요.
-        <br>
-        ※ 주문/구매 확인 문의: 010-4982-5550
-      </div>
-    </div>
-
+  <div class="card">
+    <div class="badge">배려프레스코프루타</div>
+    <h1>주문 / 배송정보 입력</h1>
+    <p class="sub">(주소는 ‘주소 검색’으로 선택 후 상세주소까지 꼭 입력해 주세요.)</p>
   </div>
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxV9yTUz9r7SXxNCy56JYlg9vr8AfTJNI_k5f9MYBoK_XeWngkE6xfTUvSYwpzzbgN4Vw/exec";
-    const PRODUCTS = [
-      "생과 배 특7.5kg (8~10과)",
-      "생과 배 특15kg (16~20과)",
-      "전통건강즙(배즙) 10포 (1박스)",
-      "전통건강즙(배즙) 10포 (3박스)",
-      "전통건강즙(배즙) 30포 (1박스)",
-      "전통건강즙(배즙) 30포 (2박스)",
-      "도라지배즙 10포 (1박스)",
-      "도라지배즙 10포 (3박스)",
-      "도라지배즙 30포 (1박스)",
-      "도라지배즙 30포 (2박스)",
-      "배즙30+도라지배즙30 (2박스)"
-    ];
+  <div class="card">
+    <h1>1) 주문자 / 수령인 정보</h1>
 
-    // ✅ 중복방지(프론트): 같은 브라우저/기기 clientId 유지
-    const CLIENT_ID_KEY = "brfta_client_id_v1";
-    function getClientId() {
-      let id = localStorage.getItem(CLIENT_ID_KEY);
-      if (!id) {
-        id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + "_" + Math.random().toString(16).slice(2);
-        localStorage.setItem(CLIENT_ID_KEY, id);
-      }
-      return id;
-    }
+    <div class="row grid2">
+      <div>
+        <label>주문자 성함</label>
+        <input id="ordererName" placeholder="예: 홍길동">
+      </div>
+      <div>
+        <label>수령인 성함</label>
+        <input id="receiverName" placeholder="예: 이순신">
+      </div>
+    </div>
 
-    // ✅ 제출 중 연타/중복 요청 방지(프론트)
-    let inFlight = false;
+    <div class="row">
+      <label>수령인 연락처</label>
+      <input id="receiverPhone" placeholder="010-1234-5678">
+      <div class="hint">숫자만 입력해도 자동으로 형식이 맞춰집니다.</div>
+    </div>
 
-    function setToast(type, msg) {
-      const el = document.getElementById("toast");
-      if (!type) {
-        el.className = "toast";
-        el.textContent = "";
-        el.style.display = "none";
-        return;
-      }
-      el.className = "toast " + (type === "ok" ? "ok" : "err");
-      el.textContent = msg;
-      el.style.display = "block";
-    }
+    <hr class="hr">
 
-    function digitsOnly(value) {
-      return (value || "").replace(/[^\d]/g, "");
-    }
+    <h1>2) 배송지</h1>
 
-    function normalizePhone(value) {
-      const digits = digitsOnly(value);
-      if (digits.length === 11 && digits.startsWith("010")) {
-        return `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}`;
-      }
-      if (digits.length === 10 && digits.startsWith("010")) {
-        return `${digits.slice(0,3)}-${digits.slice(3,6)}-${digits.slice(6)}`;
-      }
-      return (value || "").trim();
-    }
+    <div class="row">
+      <label>주소</label>
+      <div class="grid3">
+        <button class="btn-ghost" type="button" onclick="openPostcode()">주소 검색</button>
+        <input id="postcode" placeholder="우편번호" readonly>
+      </div>
+      <input id="baseAddress" placeholder="주소 검색을 눌러 선택" readonly style="margin-top:10px;">
+      <input id="detailAddress" placeholder="상세주소 (예: 101동 1004호)" style="margin-top:10px;">
+      <div class="hint">상세주소 미입력 시 반송/오배송 위험이 있습니다.</div>
+    </div>
 
-    function openPostcode() {
-      new daum.Postcode({
-        oncomplete: function(data) {
-          const addr = data.roadAddress || data.jibunAddress || "";
-          const zonecode = data.zonecode || "";
-          document.getElementById("postcode").value = zonecode;
-          document.getElementById("baseAddress").value = addr;
-          document.getElementById("detailAddress").focus();
-        }
-      }).open();
-    }
+    <div class="row">
+      <label>배송 메시지 (선택)</label>
+      <input id="message" placeholder="예: 문 앞에 놓아주세요.">
+    </div>
+  </div>
 
-    function escapeHtml(s) {
-      return String(s)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
+  <div class="card">
+    <h1>3) 주문 상품 & 수량</h1>
+    <p class="sub">원하는 상품을 체크하고 수량을 입력해 주세요.</p>
+    <div id="productList"></div>
+    <div class="small">※ 대량 구매 문의: 010-4982-5550 / sales@brfta.com</div>
+  </div>
 
-    function renderProducts() {
-      const root = document.getElementById("productList");
-      root.innerHTML = "";
-      PRODUCTS.forEach((name, idx) => {
-        const id = `p_${idx}`;
-        const qid = `q_${idx}`;
-        const div = document.createElement("div");
-        div.className = "prod";
-        div.innerHTML = `
-          <div class="prod-top">
-            <div>
-              <p class="prod-title">
-                <input class="chk" id="${id}" type="checkbox" />
-                <label for="${id}">${escapeHtml(name)}</label>
-              </p>
-              <div class="hint">선택 후 수량을 입력하세요.</div>
-            </div>
-            <div class="prod-right">
-              <input class="qty" id="${qid}" type="number" min="1" step="1" placeholder="수량" disabled />
-            </div>
-          </div>
-        `;
-        root.appendChild(div);
+  <div class="card">
+    <button id="submitBtn" class="btn" onclick="submitAll()">주문하기</button>
+    <div id="toast" class="toast"></div>
+    <div class="small">
+      주문 완료 메시지가 나올 때까지 잠시 기다려 주세요.<br>
+      ※ 주문/구매 확인 문의: 010-4982-5550
+    </div>
+  </div>
 
-        const chk = div.querySelector(`#${CSS.escape(id)}`);
-        const qty = div.querySelector(`#${CSS.escape(qid)}`);
+</div>
 
-        chk.addEventListener("change", () => {
-          qty.disabled = !chk.checked;
-          if (chk.checked) {
-            qty.value = qty.value || "1";
-            qty.focus();
-          } else {
-            qty.value = "";
-          }
-        });
+<script>
+  /* JS 로직은 네가 지금 쓰는 버전 그대로 붙이면 됨
+     (SCRIPT_URL / renderProducts / submitAll 등) */
+</script>
 
-        qty.addEventListener("blur", () => {
-          if (qty.disabled) return;
-          const v = parseInt(qty.value, 10);
-          if (!Number.isFinite(v) || v <= 0) qty.value = "1";
-        });
-      });
-    }
-
-    function collectItems() {
-      const items = [];
-      PRODUCTS.forEach((name, idx) => {
-        const chk = document.getElementById(`p_${idx}`);
-        const qtyEl = document.getElementById(`q_${idx}`);
-        if (chk && chk.checked) {
-          const qty = parseInt(qtyEl.value, 10);
-          if (Number.isFinite(qty) && qty > 0) {
-            items.push({ product: name, qty });
-          }
-        }
-      });
-      return items;
-    }
-
-    function validatePhone(phoneFormatted) {
-      const d = digitsOnly(phoneFormatted);
-      return (d.length === 11 && d.startsWith("010"));
-    }
-
-    async function submitAll() {
-      const btn = document.getElementById("submitBtn");
-
-      if (inFlight) return;
-      inFlight = true;
-
-      btn.disabled = true;
-      setToast("", "");
-
-      try {
-        if (!SCRIPT_URL || SCRIPT_URL.includes("PUT-YOUR-EXEC-URL-HERE")) {
-          setToast("err", "SCRIPT_URL이 비어있습니다.\n웹앱 exec URL로 교체해 주세요.");
-          btn.disabled = false;
-          inFlight = false;
-          return;
-        }
-
-        const ordererName = (document.getElementById("ordererName").value || "").trim();
-        const receiverName = (document.getElementById("receiverName").value || "").trim();
-
-        const receiverPhoneInput = document.getElementById("receiverPhone");
-        const receiverPhone = normalizePhone((receiverPhoneInput.value || "").trim());
-        receiverPhoneInput.value = receiverPhone;
-
-        const postcode = (document.getElementById("postcode").value || "").trim();
-        const baseAddress = (document.getElementById("baseAddress").value || "").trim();
-        const detailAddress = (document.getElementById("detailAddress").value || "").trim();
-        const message = (document.getElementById("message").value || "").trim();
-        const items = collectItems();
-
-        if (!ordererName) { setToast("err", "주문자 성함을 입력해 주세요."); btn.disabled=false; inFlight=false; return; }
-        if (!receiverName) { setToast("err", "수령인 성함을 입력해 주세요."); btn.disabled=false; inFlight=false; return; }
-        if (!receiverPhone) { setToast("err", "수령인 연락처를 입력해 주세요."); btn.disabled=false; inFlight=false; return; }
-        if (!validatePhone(receiverPhone)) { setToast("err", "연락처 형식이 올바르지 않습니다.\n예: 010-1234-5678"); btn.disabled=false; inFlight=false; return; }
-        if (!baseAddress) { setToast("err", "주소 검색을 먼저 해주세요."); btn.disabled=false; inFlight=false; return; }
-        if (!detailAddress) { setToast("err", "상세주소를 입력해 주세요."); btn.disabled=false; inFlight=false; return; }
-        if (!items.length) { setToast("err", "주문 상품을 최소 1개 이상 선택해 주세요."); btn.disabled=false; inFlight=false; return; }
-
-        const address = `${baseAddress} ${detailAddress}`.trim();
-
-        const payload = {
-          clientId: getClientId(),
-          ordererName,
-          receiverName,
-          receiverPhone,
-          postcode,
-          address,
-          message,
-          items
-        };
-
-        const resp = await fetch(SCRIPT_URL, {
-          method: "POST",
-          mode: "cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
-
-        let json = null;
-        try { json = await resp.json(); } catch (_) {}
-
-        if (!resp.ok) {
-          setToast("err", `전송 실패: HTTP ${resp.status}\n(스크립트 배포/권한/URL을 확인해 주세요)`);
-          btn.disabled = false;
-          inFlight = false;
-          return;
-        }
-
-        if (json && json.ok === false && json.error === "duplicate_order") {
-          setToast("err", "이미 접수된 주문입니다.\n(최근 5분 이내 동일 주문)");
-          btn.disabled = false;
-          inFlight = false;
-          return;
-        }
-
-        if (json && json.ok === false) {
-          setToast("err", `전송 실패: ${json.error || "unknown_error"}`);
-          btn.disabled = false;
-          inFlight = false;
-          return;
-        }
-
-        setToast("ok", "주문완료!   감사합니다.");
-        btn.disabled = false;
-        inFlight = false;
-
-      } catch (e) {
-        setToast("err", "네트워크 오류: " + (e && e.message ? e.message : String(e)));
-        btn.disabled = false;
-        inFlight = false;
-      }
-    }
-
-    renderProducts();
-
-    (function initPhoneAutoFormat() {
-      const el = document.getElementById("receiverPhone");
-      let isComposing = false;
-
-      el.addEventListener("compositionstart", () => { isComposing = true; });
-      el.addEventListener("compositionend", () => { isComposing = false; el.value = normalizePhone(el.value); });
-
-      el.addEventListener("input", () => {
-        if (isComposing) return;
-        const d = digitsOnly(el.value);
-        if (d.startsWith("010")) el.value = normalizePhone(d);
-      });
-
-      el.addEventListener("blur", () => {
-        el.value = normalizePhone(el.value);
-      });
-    })();
-  </script>
 </body>
 </html>
