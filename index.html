@@ -154,9 +154,12 @@
 
       <div class="row">
         <label>주소</label>
-        <div class="grid2">
+
+        <!-- ✅ 우편번호 추가 (로젠/주문서에 유용) -->
+        <div class="grid3">
+         <button class="btn-ghost" type="button" onclick="openPostcode()">주소 검색</button>
+          <input id="postcode" type="text" placeholder="우편번호" readonly /></div>
           <input id="baseAddress" type="text" placeholder="주소 검색을 눌러 선택" readonly />
-          <button class="btn-ghost" type="button" onclick="openPostcode()">주소 검색</button>
         </div>
 
         <div style="margin-top:10px;">
@@ -191,14 +194,9 @@
 
   </div>
 
-    /***********************
-     * ✅ 여기만 바꾸세요
-     ***********************/
+  <!-- ✅ JS는 반드시 script 태그 안에 -->
+  <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbws3LtV9zd3Gd7m7OyzteuYZBxUy1oRRZbkSq74VxV4TA8wKh3S_P2uIpq3Z_on6tYAnQ/exec";
-
-    /***********************
-     * 상품 목록 (요청한 최종 리스트)
-     ***********************/
     const PRODUCTS = [
       "생과 배 특7.5kg (8~10과)",
       "생과 배 특15kg (16~20과)",
@@ -226,67 +224,33 @@
       el.style.display = "block";
     }
 
+    function digitsOnly(value) {
+      return (value || "").replace(/[^\d]/g, "");
+    }
+
     function normalizePhone(value) {
-      const digits = (value || "").replace(/[^\d]/g, "");
+      const digits = digitsOnly(value);
+      // 010 11자리
       if (digits.length === 11 && digits.startsWith("010")) {
         return `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}`;
       }
+      // 010 10자리(구형) 케이스도 유지
       if (digits.length === 10 && digits.startsWith("010")) {
         return `${digits.slice(0,3)}-${digits.slice(3,6)}-${digits.slice(6)}`;
       }
-      return value.trim();
+      return (value || "").trim();
     }
 
     function openPostcode() {
       new daum.Postcode({
         oncomplete: function(data) {
           const addr = data.roadAddress || data.jibunAddress || "";
+          const zonecode = data.zonecode || "";
+          document.getElementById("postcode").value = zonecode;
           document.getElementById("baseAddress").value = addr;
           document.getElementById("detailAddress").focus();
         }
       }).open();
-    }
-
-    function renderProducts() {
-      const root = document.getElementById("productList");
-      root.innerHTML = "";
-
-      PRODUCTS.forEach((name, idx) => {
-        const id = `p_${idx}`;
-        const qid = `q_${idx}`;
-
-        const div = document.createElement("div");
-        div.className = "prod";
-        div.innerHTML = `
-          <div class="prod-top">
-            <div style="flex:1;">
-              <p class="prod-title">
-                <input class="chk" id="${id}" type="checkbox" />
-                <label for="${id}" style="display:inline; font-weight:700; cursor:pointer;">${escapeHtml(name)}</label>
-              </p>
-              <div class="hint">선택 후 수량을 입력하세요.</div>
-            </div>
-            <div class="prod-right">
-              <input class="qty" id="${qid}" type="number" min="1" step="1" placeholder="수량" disabled />
-            </div>
-          </div>
-        `;
-
-        root.appendChild(div);
-
-        const chk = div.querySelector(`#${CSS.escape(id)}`);
-        const qty = div.querySelector(`#${CSS.escape(qid)}`);
-
-        chk.addEventListener("change", () => {
-          qty.disabled = !chk.checked;
-          if (chk.checked) {
-            qty.value = qty.value || "1";
-            qty.focus();
-          } else {
-            qty.value = "";
-          }
-        });
-      });
     }
 
     function escapeHtml(s) {
@@ -298,104 +262,15 @@
         .replaceAll("'", "&#039;");
     }
 
-    function collectItems() {
-      const items = [];
+    function renderProducts() {
+      const root = document.getElementById("productList");
+      root.innerHTML = "";
       PRODUCTS.forEach((name, idx) => {
-        const chk = document.getElementById(`p_${idx}`);
-        const qtyEl = document.getElementById(`q_${idx}`);
-        if (chk && chk.checked) {
-          const qty = parseInt(qtyEl.value, 10);
-          if (Number.isFinite(qty) && qty > 0) {
-            items.push({ product: name, qty });
-          }
-        }
-      });
-      return items;
-    }
-
-    async function submitAll() {
-      const btn = document.getElementById("submitBtn");
-      btn.disabled = true;
-      setToast("", "");
-
-      try {
-        if (!SCRIPT_URL || SCRIPT_URL.includes("PUT-YOUR-EXEC-URL-HERE")) {
-          setToast("err", "SCRIPT_URL이 비어있습니다.\n웹앱 exec URL로 교체해 주세요.");
-          btn.disabled = false;
-          return;
-        }
-
-        const ordererName = (document.getElementById("ordererName").value || "").trim();
-        const receiverName = (document.getElementById("receiverName").value || "").trim();
-        const receiverPhoneRaw = (document.getElementById("receiverPhone").value || "").trim();
-        const receiverPhone = normalizePhone(receiverPhoneRaw);
-
-        const baseAddress = (document.getElementById("baseAddress").value || "").trim();
-        const detailAddress = (document.getElementById("detailAddress").value || "").trim();
-        const message = (document.getElementById("message").value || "").trim();
-
-        const items = collectItems();
-
-        // Validation
-        if (!ordererName) { setToast("err", "주문자 성함을 입력해 주세요."); btn.disabled=false; return; }
-        if (!receiverName) { setToast("err", "수령인 성함을 입력해 주세요."); btn.disabled=false; return; }
-        if (!receiverPhone) { setToast("err", "수령인 연락처를 입력해 주세요."); btn.disabled=false; return; }
-        if (!baseAddress) { setToast("err", "주소 검색을 먼저 해주세요."); btn.disabled=false; return; }
-        if (!detailAddress) { setToast("err", "상세주소를 입력해 주세요."); btn.disabled=false; return; }
-        if (!items.length) { setToast("err", "주문 상품을 최소 1개 이상 선택해 주세요."); btn.disabled=false; return; }
-
-        const address = `${baseAddress} ${detailAddress}`.trim();
-
-        const payload = {
-          ordererName,
-          receiverName,
-          receiverPhone,
-          address,
-          message,
-          items
-        };
-
-        // ✅ preflight(OPTIONS) 최소화를 위해 text/plain 사용 (이전 CORS 이슈 대응)
-        const resp = await fetch(SCRIPT_URL, {
-          method: "POST",
-          mode: "cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
-
-        let json = null;
-        try { json = await resp.json(); } catch (_) {}
-
-        if (!resp.ok) {
-          setToast("err", `전송 실패: HTTP ${resp.status}\n(스크립트 배포/권한/URL을 확인해 주세요)`);
-          btn.disabled = false;
-          return;
-        }
-
-        if (json && json.ok === false) {
-          setToast("err", `전송 실패: ${json.error || "unknown_error"}`);
-          btn.disabled = false;
-          return;
-        }
-
-        setToast("ok", "제출 완료! 감사합니다.\n주문서/로젠업로드 시트에 곧 반영됩니다.");
-
-        // 제출 후 폼 잠금(원하면 해제 가능)
-        btn.disabled = true;
-
-      } catch (e) {
-        setToast("err", "네트워크 오류: " + (e && e.message ? e.message : String(e)));
-        btn.disabled = false;
-      }
-    }
-
-    // 초기화
-    renderProducts();
-
-    // 전화번호 입력 시 자동 포맷
-    document.getElementById("receiverPhone").addEventListener("blur", (ev) => {
-      ev.target.value = normalizePhone(ev.target.value);
-    });
-  </script>
-</body>
-</html>
+        const id = `p_${idx}`;
+        const qid = `q_${idx}`;
+        const div = document.createElement("div");
+        div.className = "prod";
+        div.innerHTML = `
+          <div class="prod-top">
+            <div style="flex:1;">
+              <p class="
