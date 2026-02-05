@@ -135,12 +135,10 @@
         <div>
           <label>주문자 성함</label>
           <input id="ordererName" type="text" placeholder="예: 홍길동" autocomplete="name" />
-          //<div class="hint">주문하신 분 성함을 입력해 주세요.</div>
         </div>
         <div>
           <label>수령인 성함 (배송 받는 분)</label>
           <input id="receiverName" type="text" placeholder="예: 이순신" autocomplete="name" />
-          //<div class="hint">받는 분 성함을 입력해 주세요.</div>
         </div>
       </div>
 
@@ -160,7 +158,6 @@
           <input id="baseAddress" type="text" placeholder="주소 검색을 눌러 선택" readonly />
           <button class="btn-ghost" type="button" onclick="openPostcode()">주소 검색</button>
         </div>
-        <div class="hint">도로명/지번 주소가 자동 입력됩니다.</div>
 
         <div style="margin-top:10px;">
           <input id="detailAddress" type="text" placeholder="상세주소 (예: 101동 1004호)" />
@@ -170,7 +167,7 @@
 
       <div class="row">
         <label>배송 메세지 (선택)</label>
-        <textarea id="message" placeholder="예: 문 앞에 놓아주세요.">
+        <input id="message" type="text" placeholder="예: 문 앞에 놓아주세요."/>
       </div>
     </div>
 
@@ -320,86 +317,3 @@
     async function submitAll() {
       const btn = document.getElementById("submitBtn");
       btn.disabled = true;
-      setToast("", "");
-
-      try {
-        if (!SCRIPT_URL || SCRIPT_URL.includes("PUT-YOUR-EXEC-URL-HERE")) {
-          setToast("err", "SCRIPT_URL이 비어있습니다.\n웹앱 exec URL로 교체해 주세요.");
-          btn.disabled = false;
-          return;
-        }
-
-        const ordererName = (document.getElementById("ordererName").value || "").trim();
-        const receiverName = (document.getElementById("receiverName").value || "").trim();
-        const receiverPhoneRaw = (document.getElementById("receiverPhone").value || "").trim();
-        const receiverPhone = normalizePhone(receiverPhoneRaw);
-
-        const baseAddress = (document.getElementById("baseAddress").value || "").trim();
-        const detailAddress = (document.getElementById("detailAddress").value || "").trim();
-        const message = (document.getElementById("message").value || "").trim();
-
-        const items = collectItems();
-
-        // Validation
-        if (!ordererName) { setToast("err", "주문자 성함을 입력해 주세요."); btn.disabled=false; return; }
-        if (!receiverName) { setToast("err", "수령인 성함을 입력해 주세요."); btn.disabled=false; return; }
-        if (!receiverPhone) { setToast("err", "수령인 연락처를 입력해 주세요."); btn.disabled=false; return; }
-        if (!baseAddress) { setToast("err", "주소 검색을 먼저 해주세요."); btn.disabled=false; return; }
-        if (!detailAddress) { setToast("err", "상세주소를 입력해 주세요."); btn.disabled=false; return; }
-        if (!items.length) { setToast("err", "주문 상품을 최소 1개 이상 선택해 주세요."); btn.disabled=false; return; }
-
-        const address = `${baseAddress} ${detailAddress}`.trim();
-
-        const payload = {
-          ordererName,
-          receiverName,
-          receiverPhone,
-          address,
-          message,
-          items
-        };
-
-        // ✅ preflight(OPTIONS) 최소화를 위해 text/plain 사용 (이전 CORS 이슈 대응)
-        const resp = await fetch(SCRIPT_URL, {
-          method: "POST",
-          mode: "cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
-
-        let json = null;
-        try { json = await resp.json(); } catch (_) {}
-
-        if (!resp.ok) {
-          setToast("err", `전송 실패: HTTP ${resp.status}\n(스크립트 배포/권한/URL을 확인해 주세요)`);
-          btn.disabled = false;
-          return;
-        }
-
-        if (json && json.ok === false) {
-          setToast("err", `전송 실패: ${json.error || "unknown_error"}`);
-          btn.disabled = false;
-          return;
-        }
-
-        setToast("ok", "제출 완료! 감사합니다.\n주문서/로젠업로드 시트에 곧 반영됩니다.");
-
-        // 제출 후 폼 잠금(원하면 해제 가능)
-        btn.disabled = true;
-
-      } catch (e) {
-        setToast("err", "네트워크 오류: " + (e && e.message ? e.message : String(e)));
-        btn.disabled = false;
-      }
-    }
-
-    // 초기화
-    renderProducts();
-
-    // 전화번호 입력 시 자동 포맷
-    document.getElementById("receiverPhone").addEventListener("blur", (ev) => {
-      ev.target.value = normalizePhone(ev.target.value);
-    });
-  </script>
-</body>
-</html>
